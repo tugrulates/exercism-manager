@@ -40,7 +40,7 @@ def __stub_function(function):
     if function[0].strip() == 'void':
         stub += '  return;\n'
     else:
-        stub += f'  return *({function[0]}*)(NULL);\n'
+        stub += f'  return *({function[0]}*)(0);\n'
     stub += '}\n'
     return stub
 
