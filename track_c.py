@@ -22,7 +22,7 @@ def __functions(path):
     with open(path) as input:
         for line in input.readlines():
             match = re.match(
-                r'^((?:struct )?\w+ \*?)(\w+)\((.*)\)(?:;| {)$',
+                r'^((?:struct )?\w+ \*?)(\w+)\((.*)\)(?:;| {)?$',
                 line)
             if match:
                 functions.append(match.groups())
@@ -32,7 +32,7 @@ def __functions(path):
 def __stub_function(function):
     stub = '\n'
     stub += '{}{}({}) {{\n'.format(*function)
-    stub += '  // stub\n'
+    stub += '  // TODO: implement\n'
     if function[2] and function[2] != 'void':
         for param in function[2].split(','):
             param_name = re.match('^.*?(\w+)$', param).group(1)
