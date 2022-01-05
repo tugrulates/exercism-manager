@@ -18,7 +18,7 @@ def command_download(module, track):
 def command_open(module):
     def command(exercise):
         os.system('code {}'.format(
-            ' '.join(module.files(exercise))))
+            ' '.join(module.files(exercise, include_test_files=True))))
     return command
 
 
