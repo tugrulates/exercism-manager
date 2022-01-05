@@ -3,6 +3,14 @@ import re
 import sys
 
 
+__TYPE_RE = re.compile(r'(?:const )?(?:struct )?\w+ \**')
+__PARAM_RE = re.compile(rf'{__TYPE_RE.pattern}(\w+)')
+__PARAMS_RE = re.compile(
+    rf'\((|void|{__PARAM_RE.pattern}(?:,[ \n\t]*{__PARAM_RE.pattern})*)\)', re.DOTALL)
+__FUNC_RE = re.compile(
+    rf'\n({__TYPE_RE.pattern})(\w+){__PARAMS_RE.pattern}(?:;|\s?{{)', re.DOTALL)
+
+
 def __path(exercise, pattern=''):
     basename = pattern.format(exercise.replace('-', '_'))
     return os.path.join(os.path.dirname(sys.argv[0]), 'c', exercise, basename)
@@ -18,15 +26,8 @@ def __init_tests(exercise):
 
 
 def __functions(path):
-    functions = []
     with open(path) as input:
-        for line in input.readlines():
-            match = re.match(
-                r'^((?:struct )?\w+ \**)(\w+)\((.*)\)(?:;| {)?$',
-                line)
-            if match:
-                functions.append(match.groups())
-    return functions
+        return [x[:3] for x in re.findall(__FUNC_RE, input.read())]
 
 
 def __stub_function(function):
@@ -34,9 +35,8 @@ def __stub_function(function):
     stub += '{}{}({}) {{\n'.format(*function)
     stub += '  // TODO: implement\n'
     if function[2] and function[2] != 'void':
-        for param in function[2].split(','):
-            param_name = re.match('^.*?(\w+)$', param).group(1)
-            stub += f'  *(int *)(&{param_name}) = 0;\n'
+        for param in re.findall(__PARAM_RE, function[2]):
+            stub += f'  *(int *)(&{param}) = 0;\n'
     if function[0].strip() == 'void':
         stub += '  return;\n'
     else:
