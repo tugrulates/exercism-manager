@@ -73,7 +73,7 @@ def __command_make(target):
 
 
 def files(exercise, *, include_test_files=False):
-    files = [__path(exercise, '{}.c'),  __path(exercise, '{}.c')]
+    files = [__path(exercise, '{}.c'),  __path(exercise, '{}.h')]
     if include_test_files:
         files.append(__path(exercise, 'test_{}.c'))
     return files
