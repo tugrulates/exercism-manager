@@ -4,11 +4,11 @@ import sys
 
 
 __TYPE_RE = re.compile(r'(?:(?:const|unsigned|struct) )*\w+ \**')
-__PARAM_RE = re.compile(rf'{__TYPE_RE.pattern}(\w+)')
+__PARAM_RE = re.compile(rf'{__TYPE_RE.pattern}(\w+)(?:\[\])?')
 __PARAMS_RE = re.compile(
     rf'\((|void|{__PARAM_RE.pattern}(?:,[ \n\t]*{__PARAM_RE.pattern})*)\)', re.DOTALL)
 __FUNC_RE = re.compile(
-    rf'\n({__TYPE_RE.pattern})(\w+){__PARAMS_RE.pattern}(?:;|\s?{{)', re.DOTALL)
+    rf'(?:\n|^)({__TYPE_RE.pattern})(\w+){__PARAMS_RE.pattern}(?:;|\s?{{)', re.DOTALL)
 
 
 def __path(exercise, pattern=''):
