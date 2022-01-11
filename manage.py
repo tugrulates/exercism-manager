@@ -9,6 +9,13 @@ import importlib
 TRACKS = {'c', 'python'}
 
 
+def command_visit(track):
+    def command(exercise):
+        os.system(
+            f'python3 -m webbrowser "https://exercism.org/tracks/{track}/exercises/{exercise}"')
+    return command
+
+
 def command_download(module, track):
     def command(exercise):
         if not all(os.path.exists(x) for x in module.files(exercise)):
@@ -54,9 +61,10 @@ def main():
     track = parse_track()
     module = importlib.import_module(f'track_{track}')
     commands = {
-        'download': ('download exercise and initialize', command_download(module, track)),
-        'open':     ('open exercise files in VSCode',    command_open(module)),
-        'submit':   ('submit solution to exercism',      command_submit(module)),
+        'visit':    ('open the exercise page on browser', command_visit(track)),
+        'download': ('download exercise and initialize',  command_download(module, track)),
+        'open':     ('open exercise files in VSCode',     command_open(module)),
+        'submit':   ('submit solution to exercism',       command_submit(module)),
     }
     commands.update(module.commands())
     args = parse_args(commands)
