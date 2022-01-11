@@ -6,6 +6,9 @@ import sys
 import importlib
 
 
+TRACKS = {'c', 'python'}
+
+
 def command_download(module, track):
     def command(exercise):
         if not all(os.path.exists(x) for x in module.files(exercise)):
@@ -31,15 +34,15 @@ def command_submit(module):
 
 def parse_track():
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('--track', default='c', choices=['c'])
+    parser.add_argument('--track', required=True, choices=TRACKS)
     args = parser.parse_known_args(sys.argv[1:])[0]
     return args.track
 
 
 def parse_args(commands):
     parser = argparse.ArgumentParser(description='Manage exercism solutions.')
-    parser.add_argument('--track', default='c',
-                        choices=['c'], help='language track')
+    parser.add_argument('--track', required=True,
+                        choices=TRACKS, help='language track')
     parser.add_argument('--exercise', required=True, help='exercise slug')
     subparsers = parser.add_subparsers(title='commands', dest='command')
     for command, value in commands.items():
