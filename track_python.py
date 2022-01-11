@@ -1,23 +1,17 @@
 import os
 import sys
+import manage
 
 
-def __path(exercise, pattern=''):
-    basename = pattern.format(exercise.replace('-', '_'))
-    return os.path.join(os.path.dirname(sys.argv[0]), 'python', exercise, basename)
+def __command_test(args):
+    test = manage.get_path(args, '{exercise}_test.py')
+    os.system(f'python -m pytest {test}')
 
 
-def __command_test():
-    def command(exercise):
-        test = __path(exercise, '{}_test.py')
-        os.system(f'python -m pytest {test}')
-    return command
-
-
-def files(exercise, *, include_test_files=False):
-    files = [__path(exercise, '{}.py')]
+def get_files(args, *, include_test_files=False):
+    files = [manage.get_path(args, '{exercise}.py')]
     if include_test_files:
-        files.append(__path(exercise, '{}_test.py'))
+        files.append(manage.get_path(args, '{exercise}_test.py'))
     return files
 
 
@@ -27,5 +21,5 @@ def init(exercise):
 
 def commands():
     return {
-        'test':     ('run tests',              __command_test()),
+        'test': ('run tests', __command_test),
     }

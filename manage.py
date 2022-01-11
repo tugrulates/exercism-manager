@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import os
 import sys
 import importlib
@@ -9,41 +10,62 @@ import importlib
 TRACKS = {'c', 'python'}
 
 
-def command_visit(track):
-    def command(exercise):
+def command_visit(args):
+    os.system('python3 -m webbrowser "{url}"'.format(**get_metadata(args)))
+
+
+def command_download(args):
+    if args.user:
+        raise argparse.ArgumentError(
+            None, 'download user solutions through exercism command line instead')
+    module = get_module(args)
+    if not all(os.path.exists(x) for x in module.get_files(args)):
         os.system(
-            f'python3 -m webbrowser "https://exercism.org/tracks/{track}/exercises/{exercise}"')
-    return command
+            f'exercism download --exercise={args.exercise} --track={args.track}')
+        module.init(args.exercise)
 
 
-def command_download(module, track):
-    def command(exercise):
-        if not all(os.path.exists(x) for x in module.files(exercise)):
-            os.system(
-                f'exercism download --exercise={exercise} --track={track}')
-            module.init(exercise)
-    return command
+def command_open(args):
+    module = get_module(args)
+    os.system('code {}'.format(
+        ' '.join(module.get_files(args, include_test_files=True))))
 
 
-def command_open(module):
-    def command(exercise):
-        os.system('code {}'.format(
-            ' '.join(module.files(exercise, include_test_files=True))))
-    return command
+def command_submit(args):
+    if args.user:
+        raise argparse.ArgumentError(
+            None, 'submitting user solutions is not allowed')
+    module = get_module(args)
+    os.system('exercism submit {}'.format(
+        ' '.join(module.get_files(args))))
 
 
-def command_submit(module):
-    def command(exercise):
-        os.system('exercism submit {}'.format(
-            ' '.join(module.files(exercise))))
-    return command
+def get_module(args):
+    if args.track:
+        return importlib.import_module(f'track_{args.track}')
+    return None
+
+
+def get_path(args, *path):
+    abs_path = [os.path.dirname(sys.argv[0])]
+    if args.user:
+        abs_path.extend(['users', args.user])
+    abs_path.extend([args.track, args.exercise])
+    abs_path.extend(
+        [x.format(exercise=args.exercise.replace('-', '_'), track=args.track) for x in path])
+    return os.path.join(*abs_path)
+
+
+def get_metadata(args):
+    with open(get_path(args, '.exercism', 'metadata.json'), 'r') as input:
+        return json.load(input)
 
 
 def parse_track():
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('--track', required=True, choices=TRACKS)
+    parser.add_argument('--track', choices=TRACKS)
     args = parser.parse_known_args(sys.argv[1:])[0]
-    return args.track
+    return args, parser
 
 
 def parse_args(commands):
@@ -51,28 +73,37 @@ def parse_args(commands):
     parser.add_argument('--track', required=True,
                         choices=TRACKS, help='language track')
     parser.add_argument('--exercise', required=True, help='exercise slug')
+    parser.add_argument(
+        '--user', help='operate for mentee solutions')
     subparsers = parser.add_subparsers(title='commands', dest='command')
     for command, value in commands.items():
         subparsers.add_parser(command, help=value[0])
-    return parser.parse_args(sys.argv[1:])
+    args = parser.parse_args(sys.argv[1:])
+    return args, parser
 
 
 def main():
-    track = parse_track()
-    module = importlib.import_module(f'track_{track}')
+    args, parser = parse_track()
     commands = {
-        'visit':    ('open the exercise page on browser', command_visit(track)),
-        'download': ('download exercise and initialize',  command_download(module, track)),
-        'open':     ('open exercise files in VSCode',     command_open(module)),
-        'submit':   ('submit solution to exercism',       command_submit(module)),
+        'visit':    ('open the exercise page on browser', command_visit),
+        'download': ('download exercise and initialize',  command_download),
+        'open':     ('open exercise files in VSCode',     command_open),
+        'submit':   ('submit solution to exercism',       command_submit),
     }
-    commands.update(module.commands())
-    args = parse_args(commands)
+    module = get_module(args)
+    if module:
+        commands.update(module.commands())
+    args, parser = parse_args(commands)
 
     try:
-        commands[args.command][1](args.exercise)
-    except KeyError as e:
-        print(f'Unknown command {e} for {args.track} track')
+        try:
+            command = commands[args.command][1]
+        except KeyError as e:
+            print(f'Unknown command {e} for {args.track} track')
+            exit(1)
+        command(args)
+    except argparse.ArgumentError as e:
+        print(parser.error(e.message))
         exit(1)
 
 

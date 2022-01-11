@@ -1,6 +1,6 @@
 import os
 import re
-import sys
+import manage
 
 
 __TYPE_RE = re.compile(r'(?:(?:const|unsigned|struct) )*\w+ \**')
@@ -11,13 +11,8 @@ __FUNC_RE = re.compile(
     rf'(?:\n|^)({__TYPE_RE.pattern})(\w+){__PARAMS_RE.pattern}(?:;|\s?{{)', re.DOTALL)
 
 
-def __path(exercise, pattern=''):
-    basename = pattern.format(exercise.replace('-', '_'))
-    return os.path.join(os.path.dirname(sys.argv[0]), 'c', exercise, basename)
-
-
-def __init_tests(exercise):
-    test_file = __path(exercise, 'test_{}.c')
+def __init_tests(args):
+    test_file = manage.get_path(args, 'test_{exercise}.c')
     with open(test_file, 'r') as input:
         content = input.read()
     content = re.sub(r'(?<!// )TEST_IGNORE', r'// TEST_IGNORE', content)
@@ -45,9 +40,9 @@ def __stub_function(function):
     return stub
 
 
-def __init_code(exercise):
-    h_file = __path(exercise, '{}.h')
-    c_file = __path(exercise, '{}.c')
+def __init_code(args):
+    h_file = manage.get_path(args, '{exercise}.h')
+    c_file = manage.get_path(args, '{exercise}.c')
     h_functions = __functions(h_file)
     c_functions = __functions(c_file)
     functions_to_add = [x for x in h_functions if x not in c_functions]
@@ -60,22 +55,24 @@ def __init_code(exercise):
         output.write(content)
 
 
-def __command_init(exercise):
-    __init_tests(exercise)
-    __init_code(exercise)
+def __command_init(args):
+    __init_tests(args)
+    if not args.user:
+        __init_code(args)
 
 
 def __command_make(target):
-    def command(exercise):
-        os.chdir(__path(exercise))
+    def command(args):
+        os.chdir(manage.get_path(args))
         os.system(f'make {target}')
     return command
 
 
-def files(exercise, *, include_test_files=False):
-    files = [__path(exercise, '{}.c'),  __path(exercise, '{}.h')]
+def get_files(args, *, include_test_files=False):
+    files = [manage.get_path(args, '{exercise}.c'),
+             manage.get_path(args, '{exercise}.h')]
     if include_test_files:
-        files.append(__path(exercise, 'test_{}.c'))
+        files.append(manage.get_path(args, 'test_{exercise}.c'))
     return files
 
 
