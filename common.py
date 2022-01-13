@@ -63,6 +63,12 @@ def fmt(s: str, namespace: Namespace) -> str:
     """Format string using parsed arguments.
 
     :param namespace: parsed arguments
+
+    :example:
+
+    >>> args = Namespace(track='rust', exercise='bust')
+    >>> fmt('{track} to {exercise}', args)
+    'rust to bust'
     """
     return s.format(**vars(namespace))
 
