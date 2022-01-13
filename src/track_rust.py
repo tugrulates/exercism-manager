@@ -20,7 +20,8 @@ class TrackRust(object):
                 CargoCommand('build'),
                 CargoCommand('check'),
                 CargoCommand('test'),
-                CargoCommand('clean')]
+                CargoCommand('clean'),
+                CargoCommand('doc', '--open')]
 
     def get_files(self, namespace: Namespace) -> list[str]:
         """Return code files for given solution."""
@@ -79,12 +80,14 @@ class InitCommand(object):
 class CargoCommand(object):
     """Run a cargo command."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, *args: str):
         """Create make command.
 
         :param name: name of the cargo command
+        :param args: extra arguments
         """
         self.__name = name
+        self.__args = args
 
     def get_name(self) -> str:
         """Return the name of the command."""
@@ -96,5 +99,7 @@ class CargoCommand(object):
 
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
+        InitCommand().run(namespace)
+        args = ' '.join(self.__args)
         os.system(common.fmt(
-            f'cargo {self.__name} -p={{exercise}}', namespace))
+            f'cargo {self.__name} -p={{exercise}} {args}', namespace))
