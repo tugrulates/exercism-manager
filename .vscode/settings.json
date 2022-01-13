@@ -1,5 +1,7 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
     "C_Cpp.errorSquiggles": "Enabled",
-    "C_Cpp.clang_format_fallbackStyle": "LLVM"
+    "C_Cpp.clang_format_fallbackStyle": "LLVM",
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true
 }

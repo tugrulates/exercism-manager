@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+import importlib
 import json
 import os
 import sys
-import importlib
 
-
+SITE = 'https://exercism.org'
 TRACKS = {'c', 'python'}
 
 
@@ -18,18 +18,18 @@ def command_visit(args):
         if args.user:
             raise argparse.ArgumentError(
                 None, 'download a user solution before visiting')
-        url = f'https://exercism.org/tracks/{args.track}/exercises/{args.exercise}'
+        url = f'{SITE}/tracks/{args.track}/exercises/{args.exercise}'
     os.system(f'python3 -m webbrowser "{url}"')
 
 
 def command_download(args):
     if args.user:
         raise argparse.ArgumentError(
-            None, 'download user solutions through exercism command line instead')
+            None, 'download user solutions through command line instead')
     module = get_module(args)
     if not all(os.path.exists(x) for x in module.get_files(args)):
-        os.system(
-            f'exercism download --exercise={args.exercise} --track={args.track}')
+        os.system('exercism download ' +
+                  f'--exercise={args.exercise} --track={args.track}')
         module.init(args.exercise)
 
 
@@ -60,7 +60,8 @@ def get_path(args, *path):
         abs_path.extend(['users', args.user])
     abs_path.extend([args.track, args.exercise])
     abs_path.extend(
-        [x.format(exercise=args.exercise.replace('-', '_'), track=args.track) for x in path])
+        [x.format(exercise=args.exercise.replace('-', '_'),
+                  track=args.track) for x in path])
     return os.path.join(*abs_path)
 
 
