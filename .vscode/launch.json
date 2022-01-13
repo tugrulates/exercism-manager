@@ -5,14 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "gcc - Build and debug active file",
+            "name": "C: current file",
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/tests.out",
@@ -30,7 +23,30 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build"
+            "preLaunchTask": "C: build"
+        },
+        {
+            "name": "Python: current file",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Rust: current file",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--tests",
+                    "--package=lucians-luscious-lasagna",
+                ],
+                "filter": {
+                    "kind": "test"
+                }
+            }
         }
     ]
 }

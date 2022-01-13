@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"label": "build",
+			"label": "C: build",
 			"command": "make",
 			"args": [
 				"tests.out"
