@@ -13,37 +13,6 @@ from track_rust import TrackRust
 TRACKS: list[Track] = [TrackC(), TrackPython(), TrackRust()]
 
 
-def parse_track() -> tuple[Namespace, ArgumentParser]:
-    """Parse just the track argument.
-
-    :return: (parsed arguments, parser)
-    """
-    parser = ArgumentParser(add_help=False)
-    parser.add_argument('--track', choices=[x.get_name() for x in TRACKS])
-    namespace, _ = parser.parse_known_args(sys.argv[1:])
-    return namespace, parser
-
-
-def parse_args(commands: list[Command]) -> tuple[Namespace, ArgumentParser]:
-    """Parse all command line arguments.
-
-    :param commands: commands to serve through the command line
-    :return: (parsed arguments, parser)
-    """
-    parser = ArgumentParser(description='Manage Exercism solutions.')
-    parser.add_argument('--track', required=True,
-                        choices=[x.get_name() for x in TRACKS],
-                        help='language track')
-    parser.add_argument('--exercise', required=True, help='exercise slug')
-    parser.add_argument(
-        '--user', help='operate for mentee solutions')
-    subparsers = parser.add_subparsers(title='commands', dest='command')
-    for command in commands:
-        subparsers.add_parser(command.get_name(), help=command.get_help())
-    namespace = parser.parse_args(sys.argv[1:])
-    return namespace, parser
-
-
 def main() -> None:
     """Run script with given arguments."""
     namespace: Namespace
@@ -70,6 +39,37 @@ def main() -> None:
             command.run(namespace)
     except ArgumentError as e:
         parser.error(e.message)
+
+
+def parse_args(commands: list[Command]) -> tuple[Namespace, ArgumentParser]:
+    """Parse all command line arguments.
+
+    :param commands: commands to serve through the command line
+    :return: (parsed arguments, parser)
+    """
+    parser = ArgumentParser(description='Manage Exercism solutions.')
+    parser.add_argument('--track', required=True,
+                        choices=[x.get_name() for x in TRACKS],
+                        help='language track')
+    parser.add_argument('--exercise', required=True, help='exercise slug')
+    parser.add_argument(
+        '--user', help='operate for mentee solutions')
+    subparsers = parser.add_subparsers(title='commands', dest='command')
+    for command in commands:
+        subparsers.add_parser(command.get_name(), help=command.get_help())
+    namespace = parser.parse_args(sys.argv[1:])
+    return namespace, parser
+
+
+def parse_track() -> tuple[Namespace, ArgumentParser]:
+    """Parse just the track argument.
+
+    :return: (parsed arguments, parser)
+    """
+    parser = ArgumentParser(add_help=False)
+    parser.add_argument('--track', choices=[x.get_name() for x in TRACKS])
+    namespace, _ = parser.parse_known_args(sys.argv[1:])
+    return namespace, parser
 
 
 if __name__ == '__main__':
