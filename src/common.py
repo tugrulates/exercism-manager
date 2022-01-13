@@ -84,7 +84,7 @@ def get_path(namespace: Namespace, *path: str) -> str:
     :param namespace: parsed arguments
     :param path: path segments with possible argument templates
     """
-    abs_path = [os.path.dirname(sys.argv[0])]
+    abs_path = [os.path.dirname(sys.argv[0]), '..']
     if namespace.user:
         abs_path.extend(['users', namespace.user])
     abs_path.extend([namespace.track, namespace.exercise])

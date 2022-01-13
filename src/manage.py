@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Script to orchestrate local Exercism solutions."""
 
 import sys
@@ -40,7 +39,7 @@ def parse_args(commands: list[Command]) -> tuple[Namespace, ArgumentParser]:
     subparsers = parser.add_subparsers(title='commands', dest='command')
     for command in commands:
         subparsers.add_parser(command.get_name(), help=command.get_help())
-    namespace, _ = parser.parse_args(sys.argv[1:])
+    namespace = parser.parse_args(sys.argv[1:])
     return namespace, parser
 
 
