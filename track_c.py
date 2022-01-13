@@ -1,90 +1,109 @@
 import os
 import re
-import manage
+from argparse import Namespace
+
+import common
 
 
-__TYPE_RE = re.compile(r'(?:(?:const|unsigned|struct) )*\w+ \**')
-__PARAM_RE = re.compile(rf'{__TYPE_RE.pattern}(\w+)(?:\[(?:static )?.*?\])?')
-__PARAMS_RE = re.compile(
-    rf'\((|void|{__PARAM_RE.pattern}(?:,[ \n\t]*{__PARAM_RE.pattern})*)\)', re.DOTALL)
-__FUNC_RE = re.compile(
-    rf'(?:\n|^)({__TYPE_RE.pattern})(\w+){__PARAMS_RE.pattern}(?:;|\s?{{)', re.DOTALL)
+class TrackC(object):
+    def get_name(self) -> str:
+        return 'c'
+
+    def get_commands(self) -> list[common.Command]:
+        return [InitCommand(),
+                MakeCommand('build', 'tests.out'),
+                MakeCommand('test', 'test'),
+                MakeCommand('clean', 'clean'),
+                MakeCommand('memcheck', 'memcheck')]
+
+    def get_files(self, args: Namespace) -> list[str]:
+        return [common.get_path(args, '{exercise}.c'),
+                common.get_path(args, '{exercise}.h')]
+
+    def get_test_files(self, args: Namespace) -> list[str]:
+        return [common.get_path(args, 'test_{exercise}.c')]
+
+    def post_download(self, args: Namespace) -> None:
+        InitCommand().run(args)
 
 
-def __init_tests(args):
-    test_file = manage.get_path(args, 'test_{exercise}.c')
-    with open(test_file, 'r') as input:
-        content = input.read()
-    content = re.sub(r'(?<!// )TEST_IGNORE', r'// TEST_IGNORE', content)
-    with open(test_file, 'w') as output:
-        output.write(content)
+class InitCommand(object):
+    Function = tuple[str, str, str]
+
+    __TYPE_RE = re.compile(r'(?:(?:const|unsigned|struct) )*\w+ \**')
+    __PARAM_RE = re.compile(
+        rf'{__TYPE_RE.pattern}(\w+)(?:\[(?:static )?.*?\])?')
+    __PARAMS_RE = re.compile(
+        rf'\((|void|{__PARAM_RE.pattern}(?:,[ \n\t]*{__PARAM_RE.pattern})*)\)',
+        re.DOTALL)
+    __FUNC_RE = re.compile(
+        rf'(?:\n|^)({__TYPE_RE.pattern})(\w+){__PARAMS_RE.pattern}(?:;|\s?{{)',
+        re.DOTALL)
+
+    def get_name(self) -> str:
+        return 'init'
+
+    def get_help(self) -> str:
+        return 're-initialize exercise'
+
+    def __functions(self, path: str) -> list[Function]:
+        with open(path) as input:
+            return [x[:3] for x in re.findall(InitCommand.__FUNC_RE,
+                                              input.read())]
+
+    def __stub_function(self, function: Function) -> str:
+        stub = '\n'
+        stub += '{}{}({}) {{\n'.format(*function)
+        stub += '  // TODO: implement\n'
+        if function[2] and function[2] != 'void':
+            for param in re.findall(InitCommand.__PARAM_RE, function[2]):
+                stub += f'  *(int *)(&{param}) = 0;\n'
+        if function[0].strip() == 'void':
+            stub += '  return;\n'
+        else:
+            stub += f'  return *({function[0]}*)(0);\n'
+        stub += '}\n'
+        return stub
+
+    def __init_code(self, args: Namespace) -> None:
+        h_file = common.get_path(args, '{exercise}.h')
+        c_file = common.get_path(args, '{exercise}.c')
+        h_functions = self.__functions(h_file)
+        c_functions = self.__functions(c_file)
+        functions_to_add = [x for x in h_functions if x not in c_functions]
+        if not functions_to_add:
+            return
+        with open(c_file) as input:
+            content = input.read()
+        content += ''.join(self.__stub_function(x) for x in functions_to_add)
+        with open(c_file, 'w') as output:
+            output.write(content)
+
+    def __init_tests(self, args: Namespace) -> None:
+        test_file = common.get_path(args, 'test_{exercise}.c')
+        with open(test_file, 'r') as input:
+            content = input.read()
+        content = re.sub(r'(?<!// )TEST_IGNORE', r'// TEST_IGNORE', content)
+        with open(test_file, 'w') as output:
+            output.write(content)
+
+    def run(self, args: Namespace) -> None:
+        self.__init_tests(args)
+        if not args.user:
+            self.__init_code(args)
 
 
-def __functions(path):
-    with open(path) as input:
-        return [x[:3] for x in re.findall(__FUNC_RE, input.read())]
+class MakeCommand(object):
+    def __init__(self, name: str, target: str):
+        self.__name = name
+        self.__target = target
 
+    def get_name(self) -> str:
+        return self.__name
 
-def __stub_function(function):
-    stub = '\n'
-    stub += '{}{}({}) {{\n'.format(*function)
-    stub += '  // TODO: implement\n'
-    if function[2] and function[2] != 'void':
-        for param in re.findall(__PARAM_RE, function[2]):
-            stub += f'  *(int *)(&{param}) = 0;\n'
-    if function[0].strip() == 'void':
-        stub += '  return;\n'
-    else:
-        stub += f'  return *({function[0]}*)(0);\n'
-    stub += '}\n'
-    return stub
+    def get_help(self) -> str:
+        return f'run {self.__name}'
 
-
-def __init_code(args):
-    h_file = manage.get_path(args, '{exercise}.h')
-    c_file = manage.get_path(args, '{exercise}.c')
-    h_functions = __functions(h_file)
-    c_functions = __functions(c_file)
-    functions_to_add = [x for x in h_functions if x not in c_functions]
-    if not functions_to_add:
-        return
-    with open(c_file) as input:
-        content = input.read()
-    content += ''.join(__stub_function(x) for x in functions_to_add)
-    with open(c_file, 'w') as output:
-        output.write(content)
-
-
-def __command_init(args):
-    __init_tests(args)
-    if not args.user:
-        __init_code(args)
-
-
-def __command_make(target):
-    def command(args):
-        os.chdir(manage.get_path(args))
-        os.system(f'make {target}')
-    return command
-
-
-def get_files(args, *, include_test_files=False):
-    files = [manage.get_path(args, '{exercise}.c'),
-             manage.get_path(args, '{exercise}.h')]
-    if include_test_files:
-        files.append(manage.get_path(args, 'test_{exercise}.c'))
-    return files
-
-
-def init(exercise):
-    __command_init(exercise)
-
-
-def commands():
-    return {
-        'init':     ('re-initialize exercise', __command_init),
-        'build':    ('build solution',         __command_make('tests.out')),
-        'test':     ('run tests',              __command_make('test')),
-        'clean':    ('clean build artifacts',  __command_make('clean')),
-        'memcheck': ('run memory checks',      __command_make('memcheck')),
-    }
+    def run(self, args: Namespace) -> None:
+        os.chdir(common.get_path(args))
+        os.system(f'make {self.__target}')

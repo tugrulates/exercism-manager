@@ -1,25 +1,33 @@
 import os
-import sys
-import manage
+from argparse import Namespace
+
+import common
 
 
-def __command_test(args):
-    test = manage.get_path(args, '{exercise}_test.py')
-    os.system(f'python -m pytest {test}')
+class TrackPython(object):
+    def get_name(self) -> str:
+        return 'python'
+
+    def get_commands(self) -> list[common.Command]:
+        return [TestCommand()]
+
+    def get_files(self, args: Namespace) -> list[str]:
+        return [common.get_path(args, '{exercise}.py')]
+
+    def get_test_files(self, args: Namespace) -> list[str]:
+        return [common.get_path(args, '{exercise}_test.py')]
+
+    def post_download(self, _: Namespace) -> None:
+        pass
 
 
-def get_files(args, *, include_test_files=False):
-    files = [manage.get_path(args, '{exercise}.py')]
-    if include_test_files:
-        files.append(manage.get_path(args, '{exercise}_test.py'))
-    return files
+class TestCommand(object):
+    def get_name(self) -> str:
+        return 'test'
 
+    def get_help(self) -> str:
+        return 'run tests'
 
-def init(exercise):
-    pass
-
-
-def commands():
-    return {
-        'test': ('run tests', __command_test),
-    }
+    def run(self, args: Namespace) -> None:
+        test = common.get_path(args, '{exercise}_test.py')
+        os.system(f'python -m pytest {test}')
