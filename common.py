@@ -56,8 +56,8 @@ def get_metadata(namespace: Namespace) -> Mapping[str, object]:
     metadata_file = get_path(namespace, '.exercism', 'metadata.json')
     if not os.path.exists(metadata_file):
         return {}
-    with open(metadata_file, 'r') as input:
-        return dict(json.load(input))
+    with open(metadata_file, 'r') as inp:
+        return dict(json.load(inp))
 
 
 class VisitCommand(object):

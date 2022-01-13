@@ -47,9 +47,9 @@ class InitCommand(object):
         return 're-initialize exercise'
 
     def __functions(self, path: str) -> list[Function]:
-        with open(path) as input:
+        with open(path) as inp:
             return [x[:3] for x in re.findall(InitCommand.__FUNC_RE,
-                                              input.read())]
+                                              inp.read())]
 
     def __stub_function(self, function: Function) -> str:
         stub = '\n'
@@ -73,16 +73,16 @@ class InitCommand(object):
         functions_to_add = [x for x in h_functions if x not in c_functions]
         if not functions_to_add:
             return
-        with open(c_file) as input:
-            content = input.read()
+        with open(c_file) as inp:
+            content = inp.read()
         content += ''.join(self.__stub_function(x) for x in functions_to_add)
         with open(c_file, 'w') as output:
             output.write(content)
 
     def __init_tests(self, namespace: Namespace) -> None:
         test_file = common.get_path(namespace, 'test_{exercise}.c')
-        with open(test_file, 'r') as input:
-            content = input.read()
+        with open(test_file, 'r') as inp:
+            content = inp.read()
         content = re.sub(r'(?<!// )TEST_IGNORE', r'// TEST_IGNORE', content)
         with open(test_file, 'w') as output:
             output.write(content)
