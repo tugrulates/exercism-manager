@@ -57,8 +57,7 @@ def main() -> None:
         for command in commands:
             command.run(args)
     except ArgumentError as e:
-        print(parser.error(e.message))
-        exit(1)
+        parser.error(e.message)
 
 
 if __name__ == '__main__':
