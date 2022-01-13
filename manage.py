@@ -15,8 +15,8 @@ TRACKS: list[Track] = [TrackC(), TrackPython()]
 def parse_track() -> tuple[Namespace, ArgumentParser]:
     parser = ArgumentParser(add_help=False)
     parser.add_argument('--track', choices=[x.get_name() for x in TRACKS])
-    args = parser.parse_known_args(sys.argv[1:])[0]
-    return args, parser
+    namespace, _ = parser.parse_known_args(sys.argv[1:])
+    return namespace, parser
 
 
 def parse_args(commands: list[Command]) -> tuple[Namespace, ArgumentParser]:
@@ -30,32 +30,33 @@ def parse_args(commands: list[Command]) -> tuple[Namespace, ArgumentParser]:
     subparsers = parser.add_subparsers(title='commands', dest='command')
     for command in commands:
         subparsers.add_parser(command.get_name(), help=command.get_help())
-    args = parser.parse_args(sys.argv[1:])
-    return args, parser
+    namespace = parser.parse_args(sys.argv[1:])
+    return namespace, parser
 
 
 def main() -> None:
-    args: Namespace
+    namespace: Namespace
     parser: ArgumentParser
-    args, parser = parse_track()
+    namespace, parser = parse_track()
     commands: list[Command] = common.get_commands()
     module: Optional[Track] = None
 
     for track in TRACKS:
-        if track.get_name() == args.track:
+        if track.get_name() == namespace.track:
             module = track
     if module:
         commands.extend(module.get_commands())
-    args, parser = parse_args(commands)
-    args.module = module
+    namespace, parser = parse_args(commands)
+    namespace.module = module
 
     try:
-        commands = [x for x in commands if x.get_name() == args.command]
+        commands = [x for x in commands if x.get_name() == namespace.command]
         if not commands:
             raise ArgumentError(
-                None, f'Unknown command {args.command} for {args.track} track')
+                None, common.format(
+                    'Unknown command {command} for {track} track', namespace))
         for command in commands:
-            command.run(args)
+            command.run(namespace)
     except ArgumentError as e:
         parser.error(e.message)
 

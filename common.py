@@ -13,7 +13,7 @@ class Command(Protocol):
     def get_help(self) -> str:
         ...
 
-    def run(self, args: Namespace) -> None:
+    def run(self, namespace: Namespace) -> None:
         ...
 
 
@@ -24,33 +24,37 @@ class Track(Protocol):
     def get_commands(self) -> list[Command]:
         ...
 
-    def get_files(self, args: Namespace) -> list[str]:
+    def get_files(self, namespace: Namespace) -> list[str]:
         ...
 
-    def get_test_files(self, args: Namespace) -> list[str]:
+    def get_test_files(self, namespace: Namespace) -> list[str]:
         ...
 
-    def post_download(self, args: Namespace) -> None:
+    def post_download(self, namespace: Namespace) -> None:
         ...
+
+
+def format(s: str, namespace: Namespace) -> str:
+    return s.format(**vars(namespace))
 
 
 def get_commands() -> list[Command]:
     return [VisitCommand(), DownloadCommand(), OpenCommand(), SubmitCommand()]
 
 
-def get_path(args: Namespace, *path: str) -> str:
+def get_path(namespace: Namespace, *path: str) -> str:
     abs_path = [os.path.dirname(sys.argv[0])]
-    if args.user:
-        abs_path.extend(['users', args.user])
-    abs_path.extend([args.track, args.exercise])
-    abs_path.extend(
-        [x.format(exercise=args.exercise.replace('-', '_'),
-                  track=args.track) for x in path])
+    if namespace.user:
+        abs_path.extend(['users', namespace.user])
+    abs_path.extend([namespace.track, namespace.exercise])
+    replacements = vars(namespace).copy()
+    replacements['exercise'] = namespace.exercise.replace('-', '_')
+    abs_path.extend(x.format(**replacements) for x in path)
     return os.path.join(*abs_path)
 
 
-def get_metadata(args: Namespace) -> Mapping[str, object]:
-    metadata_file = get_path(args, '.exercism', 'metadata.json')
+def get_metadata(namespace: Namespace) -> Mapping[str, object]:
+    metadata_file = get_path(namespace, '.exercism', 'metadata.json')
     if not os.path.exists(metadata_file):
         return {}
     with open(metadata_file, 'r') as input:
@@ -58,40 +62,43 @@ def get_metadata(args: Namespace) -> Mapping[str, object]:
 
 
 class VisitCommand(object):
+    __URL = 'https: // exercism.org/tracks/{track}/exercises/{exercise}'
+
     def get_name(self) -> str:
         return 'visit'
 
     def get_help(self) -> str:
         return 'open the exercise page on browser'
 
-    def run(self, args: Namespace) -> None:
-        metadata = get_metadata(args)
+    def run(self, namespace: Namespace) -> None:
+        metadata = get_metadata(namespace)
         if metadata:
             url = '{url}'.format(**metadata)
         else:
-            if args.user:
+            if namespace.user:
                 raise ArgumentError(
                     None, 'download a user solution before visiting')
-            url = ('https://exercism.org/tracks/' +
-                   f'{args.track}/exercises/{args.exercise}')
+            url = format(VisitCommand.__URL, namespace)
         os.system(f'python3 -m webbrowser "{url}"')
 
 
 class DownloadCommand(object):
+    __CMD = 'exercism download --exercise={exercise}  --track={track}'
+
     def get_name(self) -> str:
         return 'download'
 
     def get_help(self) -> str:
         return 'download exercise and initialize'
 
-    def run(self, args: Namespace) -> None:
-        if args.user:
+    def run(self, namespace: Namespace) -> None:
+        if namespace.user:
             raise ArgumentError(
                 None, 'download user solutions through command line instead')
-        if not all(os.path.exists(x) for x in args.module.get_files(args)):
-            os.system('exercism download ' +
-                      f'--exercise={args.exercise} --track={args.track}')
-            args.module.post_download(args)
+        module = namespace.module
+        if not all(os.path.exists(x) for x in module.get_files(namespace)):
+            os.system(format(DownloadCommand.__CMD, namespace))
+            module.post_download(namespace)
 
 
 class OpenCommand(object):
@@ -101,22 +108,26 @@ class OpenCommand(object):
     def get_help(self) -> str:
         return 'open exercise files in VSCode'
 
-    def run(self, args: Namespace) -> None:
-        files = args.module.get_files(args) + args.module.get_test_files(args)
+    def run(self, namespace: Namespace) -> None:
+        files = namespace.module.get_files(
+            namespace) + namespace.module.get_test_files(namespace)
         files = ' '.join(files)
         os.system(f'code {files}')
 
 
 class SubmitCommand(object):
+    __CMD = 'exercism submit {files}'
+
     def get_name(self) -> str:
         return 'submit'
 
     def get_help(self) -> str:
         return 'submit solution to exercism'
 
-    def run(self, args: Namespace) -> None:
-        if args.user:
+    def run(self, namespace: Namespace) -> None:
+        if namespace.user:
             raise ArgumentError(
                 None, 'submitting user solutions is not allowed')
-        os.system('exercism submit {}'.format(
-            ' '.join(args.module.get_files(args))))
+        files = namespace.module.get_files(namespace)
+        files = ' '.join(files)
+        os.system(SubmitCommand.__CMD.format(files=files))

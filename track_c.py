@@ -16,15 +16,15 @@ class TrackC(object):
                 MakeCommand('clean', 'clean'),
                 MakeCommand('memcheck', 'memcheck')]
 
-    def get_files(self, args: Namespace) -> list[str]:
-        return [common.get_path(args, '{exercise}.c'),
-                common.get_path(args, '{exercise}.h')]
+    def get_files(self, namespace: Namespace) -> list[str]:
+        return [common.get_path(namespace, '{exercise}.c'),
+                common.get_path(namespace, '{exercise}.h')]
 
-    def get_test_files(self, args: Namespace) -> list[str]:
-        return [common.get_path(args, 'test_{exercise}.c')]
+    def get_test_files(self, namespace: Namespace) -> list[str]:
+        return [common.get_path(namespace, 'test_{exercise}.c')]
 
-    def post_download(self, args: Namespace) -> None:
-        InitCommand().run(args)
+    def post_download(self, namespace: Namespace) -> None:
+        InitCommand().run(namespace)
 
 
 class InitCommand(object):
@@ -65,9 +65,9 @@ class InitCommand(object):
         stub += '}\n'
         return stub
 
-    def __init_code(self, args: Namespace) -> None:
-        h_file = common.get_path(args, '{exercise}.h')
-        c_file = common.get_path(args, '{exercise}.c')
+    def __init_code(self, namespace: Namespace) -> None:
+        h_file = common.get_path(namespace, '{exercise}.h')
+        c_file = common.get_path(namespace, '{exercise}.c')
         h_functions = self.__functions(h_file)
         c_functions = self.__functions(c_file)
         functions_to_add = [x for x in h_functions if x not in c_functions]
@@ -79,18 +79,18 @@ class InitCommand(object):
         with open(c_file, 'w') as output:
             output.write(content)
 
-    def __init_tests(self, args: Namespace) -> None:
-        test_file = common.get_path(args, 'test_{exercise}.c')
+    def __init_tests(self, namespace: Namespace) -> None:
+        test_file = common.get_path(namespace, 'test_{exercise}.c')
         with open(test_file, 'r') as input:
             content = input.read()
         content = re.sub(r'(?<!// )TEST_IGNORE', r'// TEST_IGNORE', content)
         with open(test_file, 'w') as output:
             output.write(content)
 
-    def run(self, args: Namespace) -> None:
-        self.__init_tests(args)
-        if not args.user:
-            self.__init_code(args)
+    def run(self, namespace: Namespace) -> None:
+        self.__init_tests(namespace)
+        if not namespace.user:
+            self.__init_code(namespace)
 
 
 class MakeCommand(object):
@@ -104,6 +104,6 @@ class MakeCommand(object):
     def get_help(self) -> str:
         return f'run {self.__name}'
 
-    def run(self, args: Namespace) -> None:
-        os.chdir(common.get_path(args))
+    def run(self, namespace: Namespace) -> None:
+        os.chdir(common.get_path(namespace))
         os.system(f'make {self.__target}')
