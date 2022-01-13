@@ -1,3 +1,5 @@
+"""Operations for the C track on Exercism."""
+
 import os
 import re
 from argparse import Namespace
@@ -6,10 +8,14 @@ import common
 
 
 class TrackC(object):
+    """Solutions for the C track on exercism."""
+
     def get_name(self) -> str:
+        """Return the name of the track."""
         return 'c'
 
     def get_commands(self) -> list[common.Command]:
+        """Return the list of commands specific to this track."""
         return [InitCommand(),
                 MakeCommand('build', 'tests.out'),
                 MakeCommand('test', 'test'),
@@ -17,17 +23,22 @@ class TrackC(object):
                 MakeCommand('memcheck', 'memcheck')]
 
     def get_files(self, namespace: Namespace) -> list[str]:
+        """Return code files for given solution."""
         return [common.get_path(namespace, '{exercise}.c'),
                 common.get_path(namespace, '{exercise}.h')]
 
     def get_test_files(self, namespace: Namespace) -> list[str]:
+        """Return test files for given solution."""
         return [common.get_path(namespace, 'test_{exercise}.c')]
 
     def post_download(self, namespace: Namespace) -> None:
+        """Prepare solution after download for faster solve."""
         InitCommand().run(namespace)
 
 
 class InitCommand(object):
+    """Uncomment all tests and create stub functions."""
+
     Function = tuple[str, str, str]
 
     __TYPE_RE = re.compile(r'(?:(?:const|unsigned|struct) )*\w+ \**')
@@ -41,9 +52,11 @@ class InitCommand(object):
         re.DOTALL)
 
     def get_name(self) -> str:
+        """Return the name of the command."""
         return 'init'
 
     def get_help(self) -> str:
+        """Return help text for the command."""
         return 're-initialize exercise'
 
     def __functions(self, path: str) -> list[Function]:
@@ -88,22 +101,33 @@ class InitCommand(object):
             output.write(content)
 
     def run(self, namespace: Namespace) -> None:
+        """Run the command."""
         self.__init_tests(namespace)
         if not namespace.user:
             self.__init_code(namespace)
 
 
 class MakeCommand(object):
+    """Run a single make target."""
+
     def __init__(self, name: str, target: str):
+        """Create make command.
+
+        :param name: name of the command
+        :param target: make target
+        """
         self.__name = name
         self.__target = target
 
     def get_name(self) -> str:
+        """Return the name of the command."""
         return self.__name
 
     def get_help(self) -> str:
+        """Return help text for the command."""
         return f'run {self.__name}'
 
     def run(self, namespace: Namespace) -> None:
+        """Run the command."""
         os.chdir(common.get_path(namespace))
         os.system(f'make {self.__target}')
