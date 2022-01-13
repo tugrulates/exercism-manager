@@ -1,6 +1,7 @@
 # Actual exercises
 c/
 python/
+rust/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

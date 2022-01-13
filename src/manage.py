@@ -8,8 +8,9 @@ import common
 from common import Command, Track
 from track_c import TrackC
 from track_python import TrackPython
+from track_rust import TrackRust
 
-TRACKS: list[Track] = [TrackC(), TrackPython()]
+TRACKS: list[Track] = [TrackC(), TrackPython(), TrackRust()]
 
 
 def parse_track() -> tuple[Namespace, ArgumentParser]:

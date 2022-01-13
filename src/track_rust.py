@@ -1,4 +1,4 @@
-"""Operations for the Python track on Exercism."""
+"""Operations for the Rust track on Exercism."""
 
 import os
 from argparse import Namespace
@@ -6,43 +6,53 @@ from argparse import Namespace
 import common
 
 
-class TrackPython(object):
-    """Solutions for the Python track on exercism."""
+class TrackRust(object):
+    """Solutions for the Rust track on exercism."""
 
     def get_name(self) -> str:
         """Return the name of the track."""
-        return 'python'
+        return 'rust'
 
     def get_commands(self) -> list[common.Command]:
         """Return the list of commands specific to this track."""
-        return [TestCommand()]
+        return [CargoCommand('build'),
+                CargoCommand('check'),
+                CargoCommand('test'),
+                CargoCommand('clean')]
 
     def get_files(self, namespace: Namespace) -> list[str]:
         """Return code files for given solution."""
-        return [common.get_path(namespace, '{exercise_}.py')]
+        return [common.get_path(namespace, 'src/lib.rs')]
 
     def get_test_files(self, namespace: Namespace) -> list[str]:
         """Return test files for given solution."""
         ...
-        return [common.get_path(namespace, '{exercise_}_test.py')]
+        return [common.get_path(namespace, 'tests/{exercise}.rs')]
 
     def post_download(self, _: Namespace) -> None:
         """Prepare solution after download for faster solve."""
         pass
 
 
-class TestCommand(object):
-    """Run tests using pytest."""
+class CargoCommand(object):
+    """Run a cargo command."""
+
+    def __init__(self, name: str):
+        """Create make command.
+
+        :param name: name of the cargo command
+        """
+        self.__name = name
 
     def get_name(self) -> str:
         """Return the name of the command."""
-        return 'test'
+        return self.__name
 
     def get_help(self) -> str:
         """Return help text for the command."""
-        return 'run tests'
+        return f'run {self.__name}'
 
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
-        test = common.get_path(namespace, '{exercise_}_test.py')
-        os.system(f'python -m pytest {test}')
+        os.chdir(common.get_path(namespace))
+        os.system(f'cargo {self.__name}')

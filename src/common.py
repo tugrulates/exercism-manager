@@ -62,15 +62,22 @@ class Track(Protocol):
 def fmt(s: str, namespace: Namespace) -> str:
     """Format string using parsed arguments.
 
+    A special template called `{exercise_}` is accepted. This converts dash
+    characters into underscore in `namespace.exercise`.
+
     :param namespace: parsed arguments
 
     :example:
 
-    >>> args = Namespace(track='rust', exercise='bust')
+    >>> args = Namespace(track='rust', exercise='bu-st')
     >>> fmt('{track} to {exercise}', args)
-    'rust to bust'
+    'rust to bu-st'
+    >>> fmt('{track} to {exercise_}', args)
+    'rust to bu_st'
     """
-    return s.format(**vars(namespace))
+    mapping = vars(namespace).copy()
+    mapping['exercise_'] = namespace.exercise.replace('-', '_')
+    return s.format(**mapping)
 
 
 def get_commands() -> list[Command]:
@@ -88,9 +95,7 @@ def get_path(namespace: Namespace, *path: str) -> str:
     if namespace.user:
         abs_path.extend(['users', namespace.user])
     abs_path.extend([namespace.track, namespace.exercise])
-    replacements = vars(namespace).copy()
-    replacements['exercise'] = namespace.exercise.replace('-', '_')
-    abs_path.extend(x.format(**replacements) for x in path)
+    abs_path.extend(fmt(x, namespace) for x in path)
     return os.path.join(*abs_path)
 
 
@@ -151,7 +156,8 @@ class DownloadCommand(object):
             raise ArgumentError(
                 None, 'download user solutions through command line instead')
         module = namespace.module
-        if not all(os.path.exists(x) for x in module.get_files(namespace)):
+        files = module.get_files(namespace)
+        if not files or not all(os.path.exists(x) for x in files):
             os.system(fmt(DownloadCommand.__CMD, namespace))
             module.post_download(namespace)
 

@@ -14,6 +14,8 @@ class CommonTest(unittest.TestCase):
         args = Namespace(user=None, track='rust', exercise='rat-race')
         self.assertEqual(common.fmt('test', args), 'test')
         self.assertEqual(common.fmt('{track}', args), 'rust')
+        self.assertEqual(common.fmt('{exercise}', args), 'rat-race')
+        self.assertEqual(common.fmt('{exercise_}', args), 'rat_race')
         self.assertEqual(common.fmt(
             '{track} and {exercise}', args), 'rust and rat-race')
         with self.assertRaises(KeyError):
@@ -29,10 +31,10 @@ class CommonTest(unittest.TestCase):
         self.assertRegex(
             common.get_path(args, 'a', 'b'), '.*/rust/rat-race/a/b$')
         self.assertRegex(
-            common.get_path(args, '{exercise}.rs'),
-            '.*/rust/rat-race/rat_race.rs$')
+            common.get_path(args, 'lib/{exercise}.rs'),
+            '.*/rust/rat-race/lib/rat-race.rs$')
         self.assertRegex(
-            common.get_path(args, 'test_{exercise}.rs'),
+            common.get_path(args, 'test_{exercise_}.rs'),
             '.*/rust/rat-race/test_rat_race.rs$')
         with self.assertRaises(KeyError):
             common.get_path(args, '{unknown}')
@@ -47,7 +49,7 @@ class CommonTest(unittest.TestCase):
             common.get_path(args, 'a', 'b'),
             '.*/users/bob/rust/rat-race/a/b$')
         self.assertRegex(common.get_path(
-            args, 'test_{exercise}.rs'),
+            args, 'test_{exercise_}.rs'),
             '.*/users/bob/rust/rat-race/test_rat_race.rs$')
 
 

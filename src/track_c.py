@@ -24,12 +24,12 @@ class TrackC(object):
 
     def get_files(self, namespace: Namespace) -> list[str]:
         """Return code files for given solution."""
-        return [common.get_path(namespace, '{exercise}.c'),
-                common.get_path(namespace, '{exercise}.h')]
+        return [common.get_path(namespace, '{exercise_}.c'),
+                common.get_path(namespace, '{exercise_}.h')]
 
     def get_test_files(self, namespace: Namespace) -> list[str]:
         """Return test files for given solution."""
-        return [common.get_path(namespace, 'test_{exercise}.c')]
+        return [common.get_path(namespace, 'test_{exercise_}.c')]
 
     def post_download(self, namespace: Namespace) -> None:
         """Prepare solution after download for faster solve."""
@@ -79,8 +79,8 @@ class InitCommand(object):
         return stub
 
     def __init_code(self, namespace: Namespace) -> None:
-        h_file = common.get_path(namespace, '{exercise}.h')
-        c_file = common.get_path(namespace, '{exercise}.c')
+        h_file = common.get_path(namespace, '{exercise_}.h')
+        c_file = common.get_path(namespace, '{exercise_}.c')
         h_functions = self.__functions(h_file)
         c_functions = self.__functions(c_file)
         functions_to_add = [x for x in h_functions if x not in c_functions]
@@ -93,7 +93,7 @@ class InitCommand(object):
             output.write(content)
 
     def __init_tests(self, namespace: Namespace) -> None:
-        test_file = common.get_path(namespace, 'test_{exercise}.c')
+        test_file = common.get_path(namespace, 'test_{exercise_}.c')
         with open(test_file, 'r') as inp:
             content = inp.read()
         content = re.sub(r'(?<!// )TEST_IGNORE', r'// TEST_IGNORE', content)
