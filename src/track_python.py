@@ -1,4 +1,4 @@
-"""Operations for the C track on Exercism."""
+"""Operations for the Python track on Exercism."""
 
 import os
 from argparse import Namespace
