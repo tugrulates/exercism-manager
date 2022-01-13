@@ -1,4 +1,3 @@
-
 import json
 import os
 import sys
@@ -34,7 +33,7 @@ class Track(Protocol):
         ...
 
 
-def format(s: str, namespace: Namespace) -> str:
+def fmt(s: str, namespace: Namespace) -> str:
     return s.format(**vars(namespace))
 
 
@@ -78,7 +77,7 @@ class VisitCommand(object):
             if namespace.user:
                 raise ArgumentError(
                     None, 'download a user solution before visiting')
-            url = format(VisitCommand.__URL, namespace)
+            url = fmt(VisitCommand.__URL, namespace)
         os.system(f'python3 -m webbrowser "{url}"')
 
 
@@ -97,7 +96,7 @@ class DownloadCommand(object):
                 None, 'download user solutions through command line instead')
         module = namespace.module
         if not all(os.path.exists(x) for x in module.get_files(namespace)):
-            os.system(format(DownloadCommand.__CMD, namespace))
+            os.system(fmt(DownloadCommand.__CMD, namespace))
             module.post_download(namespace)
 
 
