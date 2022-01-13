@@ -11,7 +11,15 @@ TRACKS = {'c', 'python'}
 
 
 def command_visit(args):
-    os.system('python3 -m webbrowser "{url}"'.format(**get_metadata(args)))
+    metadata = get_metadata(args)
+    if metadata:
+        url = '{url}'.format(**metadata)
+    else:
+        if args.user:
+            raise argparse.ArgumentError(
+                None, 'download a user solution before visiting')
+        url = f'https://exercism.org/tracks/{args.track}/exercises/{args.exercise}'
+    os.system(f'python3 -m webbrowser "{url}"')
 
 
 def command_download(args):
@@ -57,7 +65,10 @@ def get_path(args, *path):
 
 
 def get_metadata(args):
-    with open(get_path(args, '.exercism', 'metadata.json'), 'r') as input:
+    metadata_file = get_path(args, '.exercism', 'metadata.json')
+    if not os.path.exists(metadata_file):
+        return None
+    with open(metadata_file, 'r') as input:
         return json.load(input)
 
 
