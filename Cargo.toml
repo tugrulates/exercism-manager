@@ -1,6 +1,0 @@
-[workspace]
-
-members = [
-    "rust/hello-world",
-    "rust/lucians-luscious-lasagna",
-]
