@@ -2,6 +2,8 @@
 
 Helper script I use to help use [Exercism](https://exercism.org/). It builds upon the Exercism CLI.
 
+This purpose of this project is to aid me in learning development practices. PRs are welcome.
+
 ## Features:
 
 - Creates buildable stubs by code generation (C track only)
