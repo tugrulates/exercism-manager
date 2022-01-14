@@ -23,7 +23,6 @@ class TrackPython(object):
 
     def get_test_files(self, namespace: Namespace) -> list[str]:
         """Return test files for given solution."""
-        ...
         return [common.get_path(namespace, '{exercise_}_test.py')]
 
     def post_download(self, _: Namespace) -> None:
