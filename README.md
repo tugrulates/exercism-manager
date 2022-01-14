@@ -19,6 +19,7 @@ This purpose of this project is to aid me in learning development practices. PRs
 
 ## Usage:
 
+- TODO: Explain bootstrap with miniconda
 - Check out this project to the same directory as your local Exercism.
 - `./manage --help`
 - Download a solution: `./manage --track=c --exercise=bob download`
