@@ -13,7 +13,7 @@ This purpose of this project is to aid me in learning development practices. PRs
 
 ## Limitations:
 
-- Linux only
+- Linux only (works in WSL too)
 - C, Python and Rust tracks only
 - IDE suport for VSCode only
 
