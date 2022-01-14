@@ -29,7 +29,6 @@ class TrackRust(object):
 
     def get_test_files(self, namespace: Namespace) -> list[str]:
         """Return test files for given solution."""
-        ...
         return [common.get_path(namespace, 'tests/{exercise}.rs')]
 
     def post_download(self, namespace: Namespace) -> None:
