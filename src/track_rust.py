@@ -44,7 +44,7 @@ class InitCommand(common.Command):
     """Add solution to rust packages and set as active debug target."""
 
     __PACKAGE_RE = re.compile(r'(?<="--package=)([\w-]+)(?=")')
-    __LINTS = ['#![warn(clippy::all)]\n', '#![deny(missing_docs)]\n']
+    __LINTS = ['#![warn(clippy::all)]\n', '#![warn(missing_docs)]\n']
 
     def get_name(self) -> str:
         """Return the name of the command."""
