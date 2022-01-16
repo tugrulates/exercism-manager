@@ -1,5 +1,6 @@
 """Operations for the Rust track on Exercism."""
 
+import json
 import os
 import re
 from argparse import ArgumentParser, Namespace
@@ -74,13 +75,17 @@ class InitCommand(common.Command):
             out.write(']\n')
 
     def __init_launch(self, namespace: Namespace) -> None:
-        launch = common.get_path(
+        config_file = common.get_path(
             namespace, '..', '..', '.vscode', 'launch.json')
-        with open(launch, 'r') as inp:
-            content = inp.read()
-        content = re.sub(InitCommand.__PACKAGE_RE, namespace.exercise, content)
-        with open(launch, 'w') as out:
-            out.write(content)
+        template_file = f'{config_file}.template'
+        with open(template_file, 'r') as inp:
+            launch = json.load(inp)
+        for config in launch.get('configurations'):
+            if 'cargo' in config:
+                config['cargo'].get('args', []).append(
+                    common.fmt('--package={exercise}', namespace))
+        with open(config_file, 'w') as out:
+            json.dump(launch, out, indent=4)
 
     def __init_lints(self, namespace: Namespace) -> None:
         file = common.get_path(namespace, 'src/lib.rs')
