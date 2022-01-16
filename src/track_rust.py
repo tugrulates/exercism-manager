@@ -4,6 +4,8 @@ import os
 import re
 from argparse import Namespace
 
+import toml
+
 import common
 
 
@@ -50,6 +52,15 @@ class InitCommand(object):
         """Return help text for the command."""
         return 're-initialize exercise'
 
+    def __init_package(self, namespace: Namespace) -> None:
+        config_file = common.get_path(namespace, 'Cargo.toml')
+        with open(config_file, 'r') as inp:
+            config = toml.load(inp)
+        if config['package']['name'] != namespace.exercise:
+            config['package']['name'] = namespace.exercise
+            with open(config_file, 'w') as out:
+                toml.dump(config, out)
+
     def __init_workspace(self, namespace: Namespace) -> None:
         rust_dir = common.get_path(namespace, '..')
         dirs = os.listdir(rust_dir)
@@ -94,6 +105,7 @@ class InitCommand(object):
 
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
+        self.__init_package(namespace)
         self.__init_workspace(namespace)
         self.__init_launch(namespace)
         self.__init_lints(namespace)
