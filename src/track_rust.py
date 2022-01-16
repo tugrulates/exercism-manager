@@ -21,7 +21,7 @@ class TrackRust(object):
         return [InitCommand(),
                 CargoCommand('build'),
                 CargoCommand('check'),
-                CargoCommand('test'),
+                CargoCommand('test', '--', '--include-ignored'),
                 CargoCommand('clean'),
                 CargoCommand('doc', '--open')]
 
