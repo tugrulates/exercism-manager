@@ -40,6 +40,7 @@ class InitCommand(object):
     """Add solution to rust packages and set as active debug target."""
 
     __PACKAGE_RE = re.compile(r'(?<="--package=)([\w-]+)(?=")')
+    __LINTS = ['#![warn(clippy::all)]\n', '#![deny(missing_docs)]\n']
 
     def get_name(self) -> str:
         """Return the name of the command."""
@@ -70,10 +71,32 @@ class InitCommand(object):
         with open(launch, 'w') as out:
             out.write(content)
 
+    def __init_lints(self, namespace: Namespace) -> None:
+        file = common.get_path(namespace, 'src/lib.rs')
+        with open(file, 'r') as inp:
+            lines = inp.readlines()
+        lints = [x for x in InitCommand.__LINTS if x not in lines]
+        has_crate_doc = any(x for i, x in enumerate(lines)
+                            if x.startswith('//! ') and
+                            lines[i+1:i+2] == ['\n'])
+        out_lines = []
+        if not has_crate_doc:
+            out_lines.append(common.fmt(
+                '//! Solve {exercise} on Exercism.\n', namespace))
+            out_lines.append('\n')
+        if lints:
+            out_lines.extend(lints)
+            out_lines.append('\n')
+        out_lines.extend(lines)
+        if lines != out_lines:
+            with open(file, 'w') as out:
+                out.writelines(out_lines)
+
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
         self.__init_workspace(namespace)
         self.__init_launch(namespace)
+        self.__init_lints(namespace)
 
 
 class CargoCommand(object):
