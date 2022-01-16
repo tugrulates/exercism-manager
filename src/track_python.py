@@ -30,7 +30,7 @@ class TrackPython(object):
         pass
 
 
-class TestCommand(object):
+class TestCommand(common.Command):
     """Run tests using pytest."""
 
     def get_name(self) -> str:

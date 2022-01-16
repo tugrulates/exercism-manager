@@ -1,29 +1,34 @@
 """Common operations for all tracks on Exercism."""
 
+import abc
 import json
 import os
 import sys
-from argparse import ArgumentError, Namespace
+from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import Mapping, Protocol
 
 
-class Command(Protocol):
+class Command(metaclass=abc.ABCMeta):
     """Script command for a single operation."""
 
+    @abc.abstractmethod
     def get_name(self) -> str:
         """Return the name of the command."""
-        ...
 
+    @abc.abstractmethod
     def get_help(self) -> str:
         """Return help text for the command."""
-        ...
 
+    @abc.abstractmethod
     def run(self, namespace: Namespace) -> None:
         """Run the command.
 
         :param namespace: parsed arguments
         """
-        ...
+
+    def add_arguments(self, parser: ArgumentParser) -> None:
+        """Add command specific arguments to the parser."""
+        pass
 
 
 class Track(Protocol):
@@ -111,7 +116,7 @@ def get_metadata(namespace: Namespace) -> Mapping[str, object]:
         return dict(json.load(inp))
 
 
-class VisitCommand(object):
+class VisitCommand(Command):
     """Visit the url of solution on browser."""
 
     __URL = 'https://exercism.org/tracks/{track}/exercises/{exercise}'
@@ -137,7 +142,7 @@ class VisitCommand(object):
         os.system(f'python3 -m webbrowser "{url}"')
 
 
-class DownloadCommand(object):
+class DownloadCommand(Command):
     """Download solution from exercism."""
 
     __CMD = 'exercism download --exercise={exercise}  --track={track}'
@@ -162,7 +167,7 @@ class DownloadCommand(object):
             module.post_download(namespace)
 
 
-class OpenCommand(object):
+class OpenCommand(Command):
     """Open all code and test files on IDE."""
 
     def get_name(self) -> str:
@@ -181,7 +186,7 @@ class OpenCommand(object):
         os.system(f'code {files}')
 
 
-class SubmitCommand(object):
+class SubmitCommand(Command):
     """Submit solution files to exercism."""
 
     __CMD = 'exercism submit {files}'

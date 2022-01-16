@@ -2,7 +2,7 @@
 
 import os
 import re
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 
 import toml
 
@@ -22,7 +22,7 @@ class TrackRust(object):
                 CargoCommand('build'),
                 CargoCommand('check'),
                 CargoCommand('test', '--', '--include-ignored'),
-                CargoCommand('clean'),
+                CargoCommand('clean', support_features=False),
                 CargoCommand('doc', '--open')]
 
     def get_files(self, namespace: Namespace) -> list[str]:
@@ -38,7 +38,7 @@ class TrackRust(object):
         InitCommand().run(namespace)
 
 
-class InitCommand(object):
+class InitCommand(common.Command):
     """Add solution to rust packages and set as active debug target."""
 
     __PACKAGE_RE = re.compile(r'(?<="--package=)([\w-]+)(?=")')
@@ -111,17 +111,19 @@ class InitCommand(object):
         self.__init_lints(namespace)
 
 
-class CargoCommand(object):
+class CargoCommand(common.Command):
     """Run a cargo command."""
 
-    def __init__(self, name: str, *args: str):
+    def __init__(self, name: str, *args: str, support_features: bool = True):
         """Create make command.
 
         :param name: name of the cargo command
-        :param args: extra arguments
+        :param args: extra arguments for cargo
+        :param support_features: allow feature management
         """
         self.__name = name
         self.__args = args
+        self.__support_features = support_features
 
     def get_name(self) -> str:
         """Return the name of the command."""
@@ -131,9 +133,24 @@ class CargoCommand(object):
         """Return help text for the command."""
         return f'run {self.__name}'
 
+    def add_arguments(self, parser: ArgumentParser) -> None:
+        """Add supported cargo arguments."""
+        if self.__support_features:
+            parser.add_argument(
+                '--features',
+                help='space or comma separated list of features to enable')
+            parser.add_argument('--all-features', default=False,
+                                action='store_true',
+                                help='enable all features')
+
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
         InitCommand().run(namespace)
-        args = ' '.join(self.__args)
-        os.system(common.fmt(
-            f'cargo {self.__name} -p={{exercise}} {args}', namespace))
+        args = ['--package', namespace.exercise]
+        if namespace.features:
+            args.extend(['--features', namespace.features])
+        if namespace.all_features:
+            args.extend(['--all-features'])
+        args.extend(self.__args)
+        args_str = ' '.join(args)
+        os.system(f'cargo {self.__name} {args_str}')

@@ -36,7 +36,7 @@ class TrackC(object):
         InitCommand().run(namespace)
 
 
-class InitCommand(object):
+class InitCommand(common.Command):
     """Uncomment all tests and create stub functions."""
 
     Function = tuple[str, str, str]
@@ -107,7 +107,7 @@ class InitCommand(object):
             self.__init_code(namespace)
 
 
-class MakeCommand(object):
+class MakeCommand(common.Command):
     """Run a single make target."""
 
     def __init__(self, name: str, target: str):
