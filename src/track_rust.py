@@ -4,6 +4,7 @@ import json
 import os
 import re
 from argparse import ArgumentParser, Namespace
+from typing import Any, MutableMapping
 
 import toml
 
@@ -66,13 +67,18 @@ class InitCommand(common.Command):
         rust_dir = common.get_path(namespace, '..')
         dirs = os.listdir(rust_dir)
         dirs = [x for x in dirs if os.path.isdir(os.path.join(rust_dir, x))]
-        dirs = sorted(dirs)
-        with open(os.path.join(rust_dir, '..', 'Cargo.toml'), 'w') as out:
-            out.write('[workspace]\n\n')
-            out.write('members = [\n')
-            for exercise in dirs:
-                out.write(f'    "rust/{exercise}",\n')
-            out.write(']\n')
+        dirs = [f'rust/{x}' for x in dirs]
+        config_file = os.path.join(rust_dir, '..', 'Cargo.toml')
+        config: MutableMapping[str, Any]
+        try:
+            with open(config_file, 'r') as inp:
+                config = toml.load(inp)
+        except IOError:
+            config = {'workspace': {'members': []}}
+        if set(dirs) != set(config.get('workspace', {}).get('members')):
+            config['workspace']['members'] = dirs
+            with open(config_file, 'w') as out:
+                toml.dump(config, out)
 
     def __init_launch(self, namespace: Namespace) -> None:
         config_file = common.get_path(
