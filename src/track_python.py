@@ -6,7 +6,7 @@ from argparse import Namespace
 import common
 
 
-class TrackPython(object):
+class PythonTrack(object):
     """Solutions for the Python track on exercism."""
 
     def get_name(self) -> str:

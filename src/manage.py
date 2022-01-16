@@ -6,11 +6,11 @@ from typing import Optional
 
 import common
 from common import Command, Track
-from track_c import TrackC
-from track_python import TrackPython
-from track_rust import TrackRust
+from track_c import CTrack
+from track_python import PythonTrack
+from track_rust import RustTrack
 
-TRACKS: list[Track] = [TrackC(), TrackPython(), TrackRust()]
+TRACKS: list[Track] = [CTrack(), PythonTrack(), RustTrack()]
 
 
 def main() -> None:

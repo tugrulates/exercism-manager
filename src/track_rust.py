@@ -10,7 +10,7 @@ import toml
 import common
 
 
-class TrackRust(object):
+class RustTrack(object):
     """Solutions for the Rust track on exercism."""
 
     def get_name(self) -> str:
