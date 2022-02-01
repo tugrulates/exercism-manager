@@ -54,7 +54,8 @@ def parse_args(commands: list[Command]) -> tuple[Namespace, ArgumentParser]:
     parser.add_argument('--exercise', required=True, help='exercise slug')
     parser.add_argument(
         '--user', help='operate for mentee solutions')
-    subparsers = parser.add_subparsers(title='commands', dest='command')
+    subparsers = parser.add_subparsers(
+        title='commands', dest='command', required=True)
     for command in commands:
         subparser = subparsers.add_parser(
             command.get_name(), help=command.get_help())
