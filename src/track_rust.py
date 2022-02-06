@@ -159,10 +159,11 @@ class CargoCommand(common.Command):
         """Run the command."""
         InitCommand().run(namespace)
         args = ['--package', namespace.exercise]
-        if namespace.features:
-            args.extend(['--features', namespace.features])
-        if namespace.all_features:
-            args.extend(['--all-features'])
+        if self.__support_features:
+            if namespace.features:
+                args.extend(['--features', namespace.features])
+            if namespace.all_features:
+                args.extend(['--all-features'])
         args.extend(self.__args)
         args_str = ' '.join(args)
         os.system(f'cargo {self.__name} {args_str}')
