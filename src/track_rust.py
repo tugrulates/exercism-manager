@@ -29,7 +29,8 @@ class RustTrack(object):
 
     def get_files(self, namespace: Namespace) -> list[str]:
         """Return code files for given solution."""
-        return [common.get_path(namespace, 'src/lib.rs')]
+        return [common.get_path(namespace, 'src/lib.rs'),
+                common.get_path(namespace, 'Cargo.toml')]
 
     def get_test_files(self, namespace: Namespace) -> list[str]:
         """Return test files for given solution."""
