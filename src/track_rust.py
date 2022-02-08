@@ -80,21 +80,22 @@ class InitCommand(common.Command):
                 toml.dump(config, f)
 
     def __init_launch(self, namespace: Namespace) -> None:
-        config_file = common.get_root() / '.vscode' / 'launch.json'
-        template_file = f'{config_file}.template'
-        with open(template_file, 'r') as inp:
-            launch = json.load(inp)
+        config_dir = common.get_root() / '.vscode'
+        config_file = config_dir / 'launch.json'
+        template_file = config_dir / 'launch.json.template'
+        with template_file.open('r') as f:
+            launch = json.load(f)
         for config in launch.get('configurations'):
             if 'cargo' in config:
                 config['cargo'].get('args', []).append(
                     common.fmt('--package={exercise}', namespace))
-        with open(config_file, 'w') as out:
-            json.dump(launch, out, indent=4)
+        with config_file.open('w') as f:
+            json.dump(launch, f, indent=4)
 
     def __init_lints(self, namespace: Namespace) -> None:
         file = common.get_path(namespace, 'src/lib.rs')
-        with open(file, 'r') as inp:
-            lines = inp.readlines()
+        with file.open('r') as f:
+            lines = f.readlines()
         lints = [x for x in InitCommand.__LINTS if x not in lines]
         has_crate_doc = any(x for i, x in enumerate(lines)
                             if x.startswith('//! ') and
@@ -109,8 +110,8 @@ class InitCommand(common.Command):
             out_lines.append('\n')
         out_lines.extend(lines)
         if lines != out_lines:
-            with open(file, 'w') as out:
-                out.writelines(out_lines)
+            with file.open('w') as f:
+                f.writelines(out_lines)
 
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
