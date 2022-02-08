@@ -3,6 +3,7 @@
 import abc
 import json
 import os
+import subprocess
 import sys
 from argparse import ArgumentError, ArgumentParser, Namespace
 from typing import Mapping, Protocol
@@ -139,13 +140,14 @@ class VisitCommand(Command):
                 raise ArgumentError(
                     None, 'download a user solution before visiting')
             url = fmt(VisitCommand.__URL, namespace)
-        os.system(f'python3 -m webbrowser "{url}"')
+        subprocess.check_call(['python', '-m', 'webbrowser', url])
 
 
 class DownloadCommand(Command):
     """Download solution from exercism."""
 
-    __CMD = 'exercism download --exercise={exercise}  --track={track}'
+    __CMD = ['exercism', 'download',
+             '--exercise={exercise}', '--track={track}']
 
     def get_name(self) -> str:
         """Return the name of the command."""
@@ -163,7 +165,8 @@ class DownloadCommand(Command):
         module = namespace.module
         files = module.get_files(namespace)
         if not files or not all(os.path.exists(x) for x in files):
-            os.system(fmt(DownloadCommand.__CMD, namespace))
+            subprocess.check_call([fmt(x, namespace)
+                                  for x in DownloadCommand.__CMD])
             module.post_download(namespace)
 
 
@@ -182,14 +185,11 @@ class OpenCommand(Command):
         """Run the command."""
         files = namespace.module.get_files(
             namespace) + namespace.module.get_test_files(namespace)
-        files = ' '.join(files)
-        os.system(f'code {files}')
+        subprocess.check_call(['code'] + files)
 
 
 class SubmitCommand(Command):
     """Submit solution files to exercism."""
-
-    __CMD = 'exercism submit {files}'
 
     def get_name(self) -> str:
         """Return the name of the command."""
@@ -205,5 +205,4 @@ class SubmitCommand(Command):
             raise ArgumentError(
                 None, 'submitting user solutions is not allowed')
         files = namespace.module.get_files(namespace)
-        files = ' '.join(files)
-        os.system(SubmitCommand.__CMD.format(files=files))
+        subprocess.check_call(['exercism', 'submit'] + files)

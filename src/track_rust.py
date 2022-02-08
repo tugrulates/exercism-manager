@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import subprocess
 from argparse import ArgumentParser, Namespace
 from typing import Any, MutableMapping
 
@@ -165,5 +166,4 @@ class CargoCommand(common.Command):
             if namespace.all_features:
                 args.extend(['--all-features'])
         args.extend(self.__args)
-        args_str = ' '.join(args)
-        os.system(f'cargo {self.__name} {args_str}')
+        subprocess.check_call(['cargo', self.__name] + args)

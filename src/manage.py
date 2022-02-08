@@ -2,6 +2,7 @@
 
 import sys
 from argparse import ArgumentError, ArgumentParser, Namespace
+from subprocess import CalledProcessError
 from typing import Optional
 
 import common
@@ -39,6 +40,8 @@ def main() -> None:
             command.run(namespace)
     except ArgumentError as e:
         parser.error(e.message)
+    except CalledProcessError:
+        exit(1)
 
 
 def parse_args(commands: list[Command]) -> tuple[Namespace, ArgumentParser]:

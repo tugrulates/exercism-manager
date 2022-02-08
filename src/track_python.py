@@ -1,6 +1,7 @@
 """Operations for the Python track on Exercism."""
 
 import os
+import subprocess
 from argparse import Namespace
 
 import common
@@ -44,4 +45,4 @@ class TestCommand(common.Command):
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
         test = common.get_path(namespace, '{exercise_}_test.py')
-        os.system(f'python -m pytest {test}')
+        subprocess.check_call(['python', '-m', 'pytest', test])

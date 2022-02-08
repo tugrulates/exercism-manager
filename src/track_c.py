@@ -2,6 +2,7 @@
 
 import os
 import re
+import subprocess
 from argparse import Namespace
 
 import common
@@ -130,4 +131,4 @@ class MakeCommand(common.Command):
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
         os.chdir(common.get_path(namespace))
-        os.system(f'make {self.__target}')
+        subprocess.check_call(['make', self.__target])
