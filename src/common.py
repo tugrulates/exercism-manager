@@ -2,10 +2,10 @@
 
 import abc
 import json
-import os
 import subprocess
 import sys
 from argparse import ArgumentError, ArgumentParser, Namespace
+from pathlib import Path
 from typing import Mapping, Protocol
 
 
@@ -43,14 +43,14 @@ class Track(Protocol):
         """Return the list of commands specific to this track."""
         ...
 
-    def get_files(self, namespace: Namespace) -> list[str]:
+    def get_files(self, namespace: Namespace) -> list[Path]:
         """Return code files for given solution.
 
         :param namespace: parsed arguments
         """
         ...
 
-    def get_test_files(self, namespace: Namespace) -> list[str]:
+    def get_test_files(self, namespace: Namespace) -> list[Path]:
         """Return test files for given solution.
 
         :param namespace: parsed arguments
@@ -91,18 +91,20 @@ def get_commands() -> list[Command]:
     return [VisitCommand(), DownloadCommand(), OpenCommand(), SubmitCommand()]
 
 
-def get_path(namespace: Namespace, *path: str) -> str:
-    """Return file given path with templates.
+def get_path(namespace: Namespace, path: str = '.') -> Path:
+    """Return exercise file from given path template.
 
     :param namespace: parsed arguments
-    :param path: path segments with possible argument templates
+    :param path: path with possible namespace templates
     """
-    abs_path = [os.path.dirname(sys.argv[0]), '..']
-    if namespace.user:
-        abs_path.extend(['users', namespace.user])
-    abs_path.extend([namespace.track, namespace.exercise])
-    abs_path.extend(fmt(x, namespace) for x in path)
-    return os.path.join(*abs_path)
+    return Path(get_root(),
+                (Path('users') / namespace.user) if namespace.user else '.',
+                namespace.track, namespace.exercise, fmt(path, namespace))
+
+
+def get_root() -> Path:
+    """Return the manager root."""
+    return Path(sys.argv[0]).parent.parent
 
 
 def get_metadata(namespace: Namespace) -> Mapping[str, object]:
@@ -110,11 +112,11 @@ def get_metadata(namespace: Namespace) -> Mapping[str, object]:
 
     :param namespace: parsed arguments
     """
-    metadata_file = get_path(namespace, '.exercism', 'metadata.json')
-    if not os.path.exists(metadata_file):
+    metadata_file = get_path(namespace, '.exercism/metadata.json')
+    if not metadata_file.exists():
         return {}
-    with open(metadata_file, 'r') as inp:
-        return dict(json.load(inp))
+    with metadata_file.open() as f:
+        return dict(json.load(f))
 
 
 class VisitCommand(Command):
@@ -164,7 +166,7 @@ class DownloadCommand(Command):
                 None, 'download user solutions through command line instead')
         module = namespace.module
         files = module.get_files(namespace)
-        if not files or not all(os.path.exists(x) for x in files):
+        if not files or not all(x.exists() for x in files):
             subprocess.check_call([fmt(x, namespace)
                                   for x in DownloadCommand.__CMD])
             module.post_download(namespace)

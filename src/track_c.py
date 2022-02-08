@@ -1,9 +1,9 @@
 """Operations for the C track on Exercism."""
 
-import os
 import re
 import subprocess
 from argparse import Namespace
+from pathlib import Path
 
 import common
 
@@ -23,12 +23,12 @@ class CTrack(object):
                 MakeCommand('clean', 'clean'),
                 MakeCommand('memcheck', 'memcheck')]
 
-    def get_files(self, namespace: Namespace) -> list[str]:
+    def get_files(self, namespace: Namespace) -> list[Path]:
         """Return code files for given solution."""
         return [common.get_path(namespace, '{exercise_}.c'),
                 common.get_path(namespace, '{exercise_}.h')]
 
-    def get_test_files(self, namespace: Namespace) -> list[str]:
+    def get_test_files(self, namespace: Namespace) -> list[Path]:
         """Return test files for given solution."""
         return [common.get_path(namespace, 'test_{exercise_}.c')]
 
@@ -60,10 +60,9 @@ class InitCommand(common.Command):
         """Return help text for the command."""
         return 're-initialize exercise'
 
-    def __functions(self, path: str) -> list[Function]:
-        with open(path) as inp:
-            return [x[:3] for x in re.findall(InitCommand.__FUNC_RE,
-                                              inp.read())]
+    def __functions(self, path: Path) -> list[Function]:
+        with path.open() as f:
+            return [x[:3] for x in re.findall(InitCommand.__FUNC_RE, f.read())]
 
     def __stub_function(self, function: Function) -> str:
         stub = '\n'
@@ -87,19 +86,19 @@ class InitCommand(common.Command):
         functions_to_add = [x for x in h_functions if x not in c_functions]
         if not functions_to_add:
             return
-        with open(c_file) as inp:
-            content = inp.read()
+        with c_file.open('r') as f:
+            content = f.read()
         content += ''.join(self.__stub_function(x) for x in functions_to_add)
-        with open(c_file, 'w') as output:
-            output.write(content)
+        with c_file.open('w') as f:
+            f.write(content)
 
     def __init_tests(self, namespace: Namespace) -> None:
         test_file = common.get_path(namespace, 'test_{exercise_}.c')
-        with open(test_file, 'r') as inp:
-            content = inp.read()
+        with test_file.open('r') as f:
+            content = f.read()
         content = re.sub(r'(?<!// )TEST_IGNORE', r'// TEST_IGNORE', content)
-        with open(test_file, 'w') as output:
-            output.write(content)
+        with test_file.open('w') as f:
+            f.write(content)
 
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
@@ -130,5 +129,5 @@ class MakeCommand(common.Command):
 
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
-        os.chdir(common.get_path(namespace))
-        subprocess.check_call(['make', self.__target])
+        subprocess.check_call(['make', self.__target],
+                              cwd=common.get_path(namespace))

@@ -1,10 +1,10 @@
 """Operations for the Rust track on Exercism."""
 
 import json
-import os
 import re
 import subprocess
 from argparse import ArgumentParser, Namespace
+from pathlib import Path
 from typing import Any, MutableMapping
 
 import toml
@@ -28,12 +28,12 @@ class RustTrack(object):
                 CargoCommand('clean', support_features=False),
                 CargoCommand('doc', '--open')]
 
-    def get_files(self, namespace: Namespace) -> list[str]:
+    def get_files(self, namespace: Namespace) -> list[Path]:
         """Return code files for given solution."""
         return [common.get_path(namespace, 'src/lib.rs'),
                 common.get_path(namespace, 'Cargo.toml')]
 
-    def get_test_files(self, namespace: Namespace) -> list[str]:
+    def get_test_files(self, namespace: Namespace) -> list[Path]:
         """Return test files for given solution."""
         return [common.get_path(namespace, 'tests/{exercise}.rs')]
 
@@ -58,33 +58,29 @@ class InitCommand(common.Command):
 
     def __init_package(self, namespace: Namespace) -> None:
         config_file = common.get_path(namespace, 'Cargo.toml')
-        with open(config_file, 'r') as inp:
-            config = toml.load(inp)
+        with config_file.open('r') as f:
+            config = toml.load(f)
         if config['package']['name'] != namespace.exercise:
             config['package']['name'] = namespace.exercise
-            with open(config_file, 'w') as out:
-                toml.dump(config, out)
+            with config_file.open('w') as f:
+                toml.dump(config, f)
 
     def __init_workspace(self, namespace: Namespace) -> None:
-        rust_dir = common.get_path(namespace, '..')
-        dirs = os.listdir(rust_dir)
-        dirs = [x for x in dirs if os.path.isdir(os.path.join(rust_dir, x))]
-        dirs = [f'rust/{x}' for x in dirs]
-        config_file = os.path.join(rust_dir, '..', 'Cargo.toml')
+        rust_dir = common.get_root() / 'rust'
+        dirs = [x for x in rust_dir.iterdir() if x.is_dir()]
+        config_file = common.get_root() / 'Cargo.toml'
         config: MutableMapping[str, Any]
-        try:
-            with open(config_file, 'r') as inp:
-                config = toml.load(inp)
-        except IOError:
-            config = {'workspace': {'members': []}}
-        if set(dirs) != set(config.get('workspace', {}).get('members')):
-            config['workspace']['members'] = dirs
-            with open(config_file, 'w') as out:
-                toml.dump(config, out)
+        if config_file.exists():
+            with config_file.open('r') as f:
+                config = toml.load(f)
+        config = config or {'workspace': {'members': []}}
+        if set(dirs) != set(config.get('workspace', {}).get('members', [])):
+            config['workspace']['members'] = [f'rust/{x.name}' for x in dirs]
+            with config_file.open('w') as f:
+                toml.dump(config, f)
 
     def __init_launch(self, namespace: Namespace) -> None:
-        config_file = common.get_path(
-            namespace, '..', '..', '.vscode', 'launch.json')
+        config_file = common.get_root() / '.vscode' / 'launch.json'
         template_file = f'{config_file}.template'
         with open(template_file, 'r') as inp:
             launch = json.load(inp)

@@ -1,8 +1,8 @@
 """Operations for the Python track on Exercism."""
 
-import os
 import subprocess
 from argparse import Namespace
+from pathlib import Path
 
 import common
 
@@ -18,11 +18,11 @@ class PythonTrack(object):
         """Return the list of commands specific to this track."""
         return [TestCommand()]
 
-    def get_files(self, namespace: Namespace) -> list[str]:
+    def get_files(self, namespace: Namespace) -> list[Path]:
         """Return code files for given solution."""
         return [common.get_path(namespace, '{exercise_}.py')]
 
-    def get_test_files(self, namespace: Namespace) -> list[str]:
+    def get_test_files(self, namespace: Namespace) -> list[Path]:
         """Return test files for given solution."""
         return [common.get_path(namespace, '{exercise_}_test.py')]
 
