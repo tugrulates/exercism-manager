@@ -2,12 +2,11 @@
 
 import subprocess
 from argparse import Namespace
-from pathlib import Path
 
 import common
 
 
-class PythonTrack(object):
+class PythonTrack(common.Track):
     """Solutions for the Python track on exercism."""
 
     def get_name(self) -> str:
@@ -17,14 +16,6 @@ class PythonTrack(object):
     def get_commands(self) -> list[common.Command]:
         """Return the list of commands specific to this track."""
         return [TestCommand()]
-
-    def get_files(self, namespace: Namespace) -> list[Path]:
-        """Return code files for given solution."""
-        return [common.get_path(namespace, '{exercise_}.py')]
-
-    def get_test_files(self, namespace: Namespace) -> list[Path]:
-        """Return test files for given solution."""
-        return [common.get_path(namespace, '{exercise_}_test.py')]
 
     def post_download(self, _: Namespace) -> None:
         """Prepare solution after download for faster solve."""
@@ -44,5 +35,5 @@ class TestCommand(common.Command):
 
     def run(self, namespace: Namespace) -> None:
         """Run the command."""
-        test = common.get_path(namespace, '{exercise_}_test.py')
-        subprocess.check_call(['python', '-m', 'pytest', test])
+        for test in namespace.module.get_test_files(namespace):
+            subprocess.check_call(['python', '-m', 'pytest', test])

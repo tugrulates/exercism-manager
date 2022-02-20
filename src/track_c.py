@@ -8,7 +8,7 @@ from pathlib import Path
 import common
 
 
-class CTrack(object):
+class CTrack(common.Track):
     """Solutions for the C track on exercism."""
 
     def get_name(self) -> str:
@@ -22,15 +22,6 @@ class CTrack(object):
                 MakeCommand('test', 'test'),
                 MakeCommand('clean', 'clean'),
                 MakeCommand('memcheck', 'memcheck')]
-
-    def get_files(self, namespace: Namespace) -> list[Path]:
-        """Return code files for given solution."""
-        return [common.get_path(namespace, '{exercise_}.c'),
-                common.get_path(namespace, '{exercise_}.h')]
-
-    def get_test_files(self, namespace: Namespace) -> list[Path]:
-        """Return test files for given solution."""
-        return [common.get_path(namespace, 'test_{exercise_}.c')]
 
     def post_download(self, namespace: Namespace) -> None:
         """Prepare solution after download for faster solve."""
@@ -62,7 +53,10 @@ class InitCommand(common.Command):
 
     def __functions(self, path: Path) -> list[Function]:
         with path.open() as f:
-            return [x[:3] for x in re.findall(InitCommand.__FUNC_RE, f.read())]
+            funcs = [x[:3]
+                     for x in re.findall(InitCommand.__FUNC_RE, f.read())]
+            return [(x[0], x[1], re.sub(r'[\s\n]+', ' ', x[2]))
+                    for x in funcs]
 
     def __stub_function(self, function: Function) -> str:
         stub = '\n'
@@ -79,8 +73,8 @@ class InitCommand(common.Command):
         return stub
 
     def __init_code(self, namespace: Namespace) -> None:
-        h_file = common.get_path(namespace, '{exercise_}.h')
-        c_file = common.get_path(namespace, '{exercise_}.c')
+        h_file = namespace.module.find_solution_file(namespace, '*.h')
+        c_file = namespace.module.find_solution_file(namespace, '*.c')
         h_functions = self.__functions(h_file)
         c_functions = self.__functions(c_file)
         functions_to_add = [x for x in h_functions if x not in c_functions]
@@ -93,12 +87,13 @@ class InitCommand(common.Command):
             f.write(content)
 
     def __init_tests(self, namespace: Namespace) -> None:
-        test_file = common.get_path(namespace, 'test_{exercise_}.c')
-        with test_file.open('r') as f:
-            content = f.read()
-        content = re.sub(r'(?<!// )TEST_IGNORE', r'// TEST_IGNORE', content)
-        with test_file.open('w') as f:
-            f.write(content)
+        for test_file in namespace.module.get_test_files(namespace):
+            with test_file.open('r') as f:
+                content = f.read()
+            content = re.sub(r'(?<!// )TEST_IGNORE',
+                             r'// TEST_IGNORE', content)
+            with test_file.open('w') as f:
+                f.write(content)
 
     def run(self, namespace: Namespace) -> None:
         """Run the command."""

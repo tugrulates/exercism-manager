@@ -12,7 +12,7 @@ import toml
 import common
 
 
-class RustTrack(object):
+class RustTrack(common.Track):
     """Solutions for the Rust track on exercism."""
 
     def get_name(self) -> str:
@@ -28,14 +28,10 @@ class RustTrack(object):
                 CargoCommand('clean', support_features=False),
                 CargoCommand('doc', '--open')]
 
-    def get_files(self, namespace: Namespace) -> list[Path]:
+    def get_solution_files(self, namespace: Namespace) -> list[Path]:
         """Return code files for given solution."""
-        return [common.get_path(namespace, 'src/lib.rs'),
-                common.get_path(namespace, 'Cargo.toml')]
-
-    def get_test_files(self, namespace: Namespace) -> list[Path]:
-        """Return test files for given solution."""
-        return [common.get_path(namespace, 'tests/{exercise}.rs')]
+        return (super(RustTrack, self).get_solution_files(namespace) +
+                [common.get_path(namespace, 'Cargo.toml')])
 
     def post_download(self, namespace: Namespace) -> None:
         """Prepate rust workspace for this solution."""
@@ -93,7 +89,7 @@ class InitCommand(common.Command):
             json.dump(launch, f, indent=4)
 
     def __init_lints(self, namespace: Namespace) -> None:
-        file = common.get_path(namespace, 'src/lib.rs')
+        file = namespace.module.find_solution_file(namespace, 'src/*.rs')
         with file.open('r') as f:
             lines = f.readlines()
         lints = [x for x in InitCommand.__LINTS if x not in lines]
