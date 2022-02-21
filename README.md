@@ -23,7 +23,6 @@ This purpose of this project is to aid me in learning development practices. PRs
 - TODO: Explain bootstrap with miniconda
 - Check out this project to the same directory as your local Exercism.
 - `./manage --help`
-- Download a solution: `./manage --track=c --exercise=bob download`
-- It's ready to build and test: `./manage --track=c --exercise=bob test`
+- Download, build and test: `./manage --track=c --exercise=bob test`
 - Open problem files on VSCode: `./manage --track=c --exercise=bob code`
 - Submit: `./manage --track=c --exercise=bob submit`

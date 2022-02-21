@@ -76,7 +76,7 @@ class OpenCommand(Command):
     @property
     def name(self) -> str:
         """Name of the command."""
-        return 'visit'
+        return 'open'
 
     def needs_download(self) -> bool:
         """Return whether the exercise is needed locally."""
@@ -120,6 +120,7 @@ class InfoCommand(Command):
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
+        relative_path = exercise.path.relative_to(Path.cwd())
         solution_files = [str(x.relative_to(exercise.path))
                           for x in exercise.solution_files]
         test_files = [str(x.relative_to(exercise.path))
@@ -128,7 +129,7 @@ class InfoCommand(Command):
                  f'exercise:       {exercise.name}',
                  f'blurb:          {exercise.blurb}',
                  f'user:           {exercise.user}' if exercise.user else None,
-                 f'path:           {exercise.path}',
+                 f'path:           {relative_path}',
                  f'url:            {exercise.url}',
                  f'solution files: {solution_files}',
                  f'test files:     {test_files}']
@@ -141,7 +142,7 @@ class CodeCommand(Command):
     @property
     def name(self) -> str:
         """Name of the command."""
-        return 'open'
+        return 'code'
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
