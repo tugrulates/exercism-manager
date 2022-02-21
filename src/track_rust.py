@@ -55,15 +55,15 @@ class InitCommand(common.Command):
         config_file = exercise.get_path('Cargo.toml')
         with config_file.open('r') as f:
             config = toml.load(f)
-        if config['package']['name'] != exercise.get_name():
-            config['package']['name'] = exercise.get_name()
+        if config['package']['name'] != exercise.name:
+            config['package']['name'] = exercise.name
             with config_file.open('w') as f:
                 toml.dump(config, f)
 
     def __init_workspace(self, exercise: Exercise) -> None:
-        rust_dir = exercise.get_root() / 'rust'
+        rust_dir = exercise.root / 'rust'
         dirs = [x for x in rust_dir.iterdir() if x.is_dir()]
-        config_file = exercise.get_root() / 'Cargo.toml'
+        config_file = exercise.root / 'Cargo.toml'
         config: MutableMapping[str, Any]
         if config_file.exists():
             with config_file.open('r') as f:
@@ -75,7 +75,7 @@ class InitCommand(common.Command):
                 toml.dump(config, f)
 
     def __init_launch(self, exercise: Exercise) -> None:
-        config_dir = exercise.get_root() / '.vscode'
+        config_dir = exercise.root / '.vscode'
         config_file = config_dir / 'launch.json'
         template_file = config_dir / 'launch.json.template'
         with template_file.open('r') as f:
@@ -152,7 +152,7 @@ class CargoCommand(common.Command):
         """Run the command."""
         # Set the current exercise a default.
         InitCommand().run(exercise)
-        args = ['--package', exercise.get_name()]
+        args = ['--package', exercise.name]
         if self.__support_features:
             if exercise._namespace.features:
                 args.extend(['--features', exercise._namespace.features])

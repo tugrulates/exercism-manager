@@ -74,8 +74,8 @@ class InitCommand(common.Command):
         return stub
 
     def __init_code(self, exercise: Exercise) -> None:
-        h_file = exercise.find_solution_file('*.h')
-        c_file = exercise.find_solution_file('*.c')
+        h_file = exercise.find_file('*.h')
+        c_file = exercise.find_file('*.c')
         h_functions = self.__functions(h_file)
         c_functions = self.__functions(c_file)
         functions_to_add = [x for x in h_functions if x not in c_functions]
@@ -88,7 +88,7 @@ class InitCommand(common.Command):
             f.write(content)
 
     def __init_tests(self, exercise: Exercise) -> None:
-        for test_file in exercise.get_test_files():
+        for test_file in exercise.test_files:
             with test_file.open('r') as f:
                 content = f.read()
             content = re.sub(r'(?<!// )TEST_IGNORE',
@@ -99,7 +99,7 @@ class InitCommand(common.Command):
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
         self.__init_tests(exercise)
-        if not exercise.get_user():
+        if not exercise.user:
             self.__init_code(exercise)
 
 
@@ -125,5 +125,4 @@ class MakeCommand(common.Command):
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        subprocess.check_call(['make', self.__target],
-                              cwd=exercise.get_path())
+        subprocess.check_call(['make', self.__target], cwd=exercise.path)

@@ -75,7 +75,7 @@ class VisitCommand(Command):
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
         if not exercise.is_downloaded():
-            if exercise.get_user():
+            if exercise.user:
                 raise ArgumentError(
                     None, 'download a user solution before visiting')
         else:
@@ -100,9 +100,9 @@ class DownloadCommand(Command):
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        if exercise.get_user():
+        if exercise.user:
             raise ArgumentError(
-                None, 'download user solutions through command line instead')
+                None, 'download user solutions through exercism CLI instead')
         exercise.download()
 
 
@@ -119,7 +119,7 @@ class OpenCommand(Command):
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        files = (exercise.get_solution_files() + exercise.get_test_files())
+        files = exercise.solution_files + exercise.test_files
         subprocess.check_call(['code'] + [str(x) for x in files])
 
 
@@ -136,8 +136,8 @@ class SubmitCommand(Command):
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        if exercise.get_user:
+        if exercise.user:
             raise ArgumentError(
                 None, 'submitting user solutions is not allowed')
-        files = exercise.get_solution_files()
+        files = exercise.solution_files
         subprocess.check_call(['exercism', 'submit'] + [str(x) for x in files])

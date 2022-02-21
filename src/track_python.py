@@ -31,5 +31,5 @@ class TestCommand(common.Command):
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        for test in exercise.get_test_files():
+        for test in exercise.test_files:
             subprocess.check_call(['python', '-m', 'pytest', test])
