@@ -45,11 +45,12 @@ def parse_args(commands: list[Command]) -> tuple[Namespace, ArgumentParser]:
     :return: (parsed arguments, parser)
     """
     parser = ArgumentParser(description='Manage Exercism solutions.')
-    parser.add_argument('--track', required=True,
+    parser.add_argument('-t', '--track', required=True,
                         choices=[x.name for x in TRACKS],
                         help='language track')
-    parser.add_argument('--exercise', required=True, help='exercise slug')
-    parser.add_argument('--user', help='operate for mentee solutions')
+    parser.add_argument('-e', '--exercise', required=True,
+                        help='exercise slug')
+    parser.add_argument('-u', '--user', help='operate for mentee solutions')
     subparsers = parser.add_subparsers(
         title='commands', dest='command', required=True)
     for command in commands:
@@ -65,7 +66,7 @@ def parse_track() -> Optional[Track]:
     :return: (parsed arguments, parser)
     """
     parser = ArgumentParser(add_help=False)
-    parser.add_argument('--track', choices=[x.name for x in TRACKS])
+    parser.add_argument('-t', '--track', choices=[x.name for x in TRACKS])
     namespace, _ = parser.parse_known_args(sys.argv[1:])
     if namespace.track:
         [track] = [x for x in TRACKS if x.name == namespace.track]
