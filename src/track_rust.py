@@ -154,4 +154,4 @@ class CargoCommand(common.Command):
             if exercise.namespace.all_features:
                 args.extend(['--all-features'])
         args.extend(self._args)
-        subprocess.check_call(['cargo', self.name] + args)
+        subprocess.check_call(['cargo', self.name] + args, cwd=exercise.root)

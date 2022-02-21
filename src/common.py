@@ -84,14 +84,10 @@ class VisitCommand(Command):
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        if exercise.is_downloaded():
-            if exercise.user:
-                raise ArgumentError(
-                    None, 'download a user solution before visiting')
-        else:
-            url = ('https://exercism.org/tracks/'
-                   f'{exercise.track}/exercises/{exercise.name}')
-        subprocess.check_call(['python', '-m', 'webbrowser', url])
+        if exercise.user and not exercise.is_downloaded():
+            raise ArgumentError(
+                None, 'download a user solution before visiting')
+        subprocess.check_call(['python', '-m', 'webbrowser', exercise.url])
 
 
 class DownloadCommand(Command):

@@ -61,7 +61,7 @@ class Exercise:
         """Exercise directory."""
         return (self.root /
                 (Path('users') / self.user if self.user else '') /
-                Path(self._track.get_name()) / self.name)
+                Path(self._track.name) / self.name)
 
     @property
     def root(self) -> Path:
