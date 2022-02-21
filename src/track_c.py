@@ -2,10 +2,10 @@
 
 import re
 import subprocess
-from argparse import Namespace
 from pathlib import Path
 
 import common
+from exercise import Exercise
 
 
 class CTrack(common.Track):
@@ -17,15 +17,16 @@ class CTrack(common.Track):
 
     def get_commands(self) -> list[common.Command]:
         """Return the list of commands specific to this track."""
-        return [InitCommand(),
-                MakeCommand('build', 'tests.out'),
-                MakeCommand('test', 'test'),
-                MakeCommand('clean', 'clean'),
-                MakeCommand('memcheck', 'memcheck')]
+        return super().get_commands() + [
+            InitCommand(),
+            MakeCommand('build', 'tests.out'),
+            MakeCommand('test', 'test'),
+            MakeCommand('clean', 'clean'),
+            MakeCommand('memcheck', 'memcheck')]
 
-    def post_download(self, namespace: Namespace) -> None:
+    def post_download(self, exercise: Exercise) -> None:
         """Prepare solution after download for faster solve."""
-        InitCommand().run(namespace)
+        InitCommand().run(exercise)
 
 
 class InitCommand(common.Command):
@@ -72,9 +73,9 @@ class InitCommand(common.Command):
         stub += '}\n'
         return stub
 
-    def __init_code(self, namespace: Namespace) -> None:
-        h_file = namespace.module.find_solution_file(namespace, '*.h')
-        c_file = namespace.module.find_solution_file(namespace, '*.c')
+    def __init_code(self, exercise: Exercise) -> None:
+        h_file = exercise.find_solution_file('*.h')
+        c_file = exercise.find_solution_file('*.c')
         h_functions = self.__functions(h_file)
         c_functions = self.__functions(c_file)
         functions_to_add = [x for x in h_functions if x not in c_functions]
@@ -86,8 +87,8 @@ class InitCommand(common.Command):
         with c_file.open('w') as f:
             f.write(content)
 
-    def __init_tests(self, namespace: Namespace) -> None:
-        for test_file in namespace.module.get_test_files(namespace):
+    def __init_tests(self, exercise: Exercise) -> None:
+        for test_file in exercise.get_test_files():
             with test_file.open('r') as f:
                 content = f.read()
             content = re.sub(r'(?<!// )TEST_IGNORE',
@@ -95,11 +96,11 @@ class InitCommand(common.Command):
             with test_file.open('w') as f:
                 f.write(content)
 
-    def run(self, namespace: Namespace) -> None:
+    def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        self.__init_tests(namespace)
-        if not namespace.user:
-            self.__init_code(namespace)
+        self.__init_tests(exercise)
+        if not exercise.get_user():
+            self.__init_code(exercise)
 
 
 class MakeCommand(common.Command):
@@ -122,7 +123,7 @@ class MakeCommand(common.Command):
         """Return help text for the command."""
         return f'run {self.__name}'
 
-    def run(self, namespace: Namespace) -> None:
+    def run(self, exercise: Exercise) -> None:
         """Run the command."""
         subprocess.check_call(['make', self.__target],
-                              cwd=common.get_path(namespace))
+                              cwd=exercise.get_path())

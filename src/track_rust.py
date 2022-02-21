@@ -1,15 +1,15 @@
 """Operations for the Rust track on Exercism."""
 
 import json
-import re
 import subprocess
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, MutableMapping
 
 import toml
 
 import common
+from exercise import Exercise
 
 
 class RustTrack(common.Track):
@@ -21,27 +21,26 @@ class RustTrack(common.Track):
 
     def get_commands(self) -> list[common.Command]:
         """Return the list of commands specific to this track."""
-        return [InitCommand(),
-                CargoCommand('build'),
-                CargoCommand('check'),
-                CargoCommand('test', '--', '--include-ignored'),
-                CargoCommand('clean', support_features=False),
-                CargoCommand('doc', '--open')]
+        return super().get_commands() + [
+            InitCommand(),
+            CargoCommand('build'),
+            CargoCommand('check'),
+            CargoCommand('test', '--', '--include-ignored'),
+            CargoCommand('clean', support_features=False),
+            CargoCommand('doc', '--open')]
 
-    def get_solution_files(self, namespace: Namespace) -> list[Path]:
+    def get_additional_solution_files(self, exercise: Exercise) -> list[Path]:
         """Return code files for given solution."""
-        return (super(RustTrack, self).get_solution_files(namespace) +
-                [common.get_path(namespace, 'Cargo.toml')])
+        return [exercise.get_path('Cargo.toml')]
 
-    def post_download(self, namespace: Namespace) -> None:
+    def post_download(self, exercise: Exercise) -> None:
         """Prepate rust workspace for this solution."""
-        InitCommand().run(namespace)
+        InitCommand().run(exercise)
 
 
 class InitCommand(common.Command):
     """Add solution to rust packages and set as active debug target."""
 
-    __PACKAGE_RE = re.compile(r'(?<="--package=)([\w-]+)(?=")')
     __LINTS = ['#![warn(clippy::all)]\n', '#![warn(missing_docs)]\n']
 
     def get_name(self) -> str:
@@ -52,19 +51,19 @@ class InitCommand(common.Command):
         """Return help text for the command."""
         return 're-initialize exercise'
 
-    def __init_package(self, namespace: Namespace) -> None:
-        config_file = common.get_path(namespace, 'Cargo.toml')
+    def __init_package(self, exercise: Exercise) -> None:
+        config_file = exercise.get_path('Cargo.toml')
         with config_file.open('r') as f:
             config = toml.load(f)
-        if config['package']['name'] != namespace.exercise:
-            config['package']['name'] = namespace.exercise
+        if config['package']['name'] != exercise.get_name():
+            config['package']['name'] = exercise.get_name()
             with config_file.open('w') as f:
                 toml.dump(config, f)
 
-    def __init_workspace(self, namespace: Namespace) -> None:
-        rust_dir = common.get_root() / 'rust'
+    def __init_workspace(self, exercise: Exercise) -> None:
+        rust_dir = exercise.get_root() / 'rust'
         dirs = [x for x in rust_dir.iterdir() if x.is_dir()]
-        config_file = common.get_root() / 'Cargo.toml'
+        config_file = exercise.get_root() / 'Cargo.toml'
         config: MutableMapping[str, Any]
         if config_file.exists():
             with config_file.open('r') as f:
@@ -75,8 +74,8 @@ class InitCommand(common.Command):
             with config_file.open('w') as f:
                 toml.dump(config, f)
 
-    def __init_launch(self, namespace: Namespace) -> None:
-        config_dir = common.get_root() / '.vscode'
+    def __init_launch(self, exercise: Exercise) -> None:
+        config_dir = exercise.get_root() / '.vscode'
         config_file = config_dir / 'launch.json'
         template_file = config_dir / 'launch.json.template'
         with template_file.open('r') as f:
@@ -84,12 +83,12 @@ class InitCommand(common.Command):
         for config in launch.get('configurations'):
             if 'cargo' in config:
                 config['cargo'].get('args', []).append(
-                    common.fmt('--package={exercise}', namespace))
+                    exercise.fmt('--package={exercise}'))
         with config_file.open('w') as f:
             json.dump(launch, f, indent=4)
 
-    def __init_lints(self, namespace: Namespace) -> None:
-        file = namespace.module.find_solution_file(namespace, 'src/*.rs')
+    def __init_lints(self, exercise: Exercise) -> None:
+        file = exercise.find_solution_file('src/*.rs')
         with file.open('r') as f:
             lines = f.readlines()
         lints = [x for x in InitCommand.__LINTS if x not in lines]
@@ -98,8 +97,8 @@ class InitCommand(common.Command):
                             lines[i+1:i+2] == ['\n'])
         out_lines = []
         if not has_crate_doc:
-            out_lines.append(common.fmt(
-                '//! Solve {exercise} on Exercism.\n', namespace))
+            out_lines.append(exercise.fmt(
+                '//! Solve {exercise} on Exercism.\n'))
             out_lines.append('\n')
         if lints:
             out_lines.extend(lints)
@@ -109,12 +108,12 @@ class InitCommand(common.Command):
             with file.open('w') as f:
                 f.writelines(out_lines)
 
-    def run(self, namespace: Namespace) -> None:
+    def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        self.__init_package(namespace)
-        self.__init_workspace(namespace)
-        self.__init_launch(namespace)
-        self.__init_lints(namespace)
+        self.__init_package(exercise)
+        self.__init_workspace(exercise)
+        self.__init_launch(exercise)
+        self.__init_lints(exercise)
 
 
 class CargoCommand(common.Command):
@@ -149,14 +148,15 @@ class CargoCommand(common.Command):
                                 action='store_true',
                                 help='enable all features')
 
-    def run(self, namespace: Namespace) -> None:
+    def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        InitCommand().run(namespace)
-        args = ['--package', namespace.exercise]
+        # Set the current exercise a default.
+        InitCommand().run(exercise)
+        args = ['--package', exercise.get_name()]
         if self.__support_features:
-            if namespace.features:
-                args.extend(['--features', namespace.features])
-            if namespace.all_features:
+            if exercise._namespace.features:
+                args.extend(['--features', exercise._namespace.features])
+            if exercise._namespace.all_features:
                 args.extend(['--all-features'])
         args.extend(self.__args)
         subprocess.check_call(['cargo', self.__name] + args)

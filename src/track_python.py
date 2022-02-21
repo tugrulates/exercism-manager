@@ -1,9 +1,9 @@
 """Operations for the Python track on Exercism."""
 
 import subprocess
-from argparse import Namespace
 
 import common
+from exercise import Exercise
 
 
 class PythonTrack(common.Track):
@@ -15,11 +15,7 @@ class PythonTrack(common.Track):
 
     def get_commands(self) -> list[common.Command]:
         """Return the list of commands specific to this track."""
-        return [TestCommand()]
-
-    def post_download(self, _: Namespace) -> None:
-        """Prepare solution after download for faster solve."""
-        pass
+        return super().get_commands() + [TestCommand()]
 
 
 class TestCommand(common.Command):
@@ -33,7 +29,7 @@ class TestCommand(common.Command):
         """Return help text for the command."""
         return 'run tests'
 
-    def run(self, namespace: Namespace) -> None:
+    def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        for test in namespace.module.get_test_files(namespace):
+        for test in exercise.get_test_files():
             subprocess.check_call(['python', '-m', 'pytest', test])
