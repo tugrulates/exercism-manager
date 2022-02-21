@@ -9,25 +9,24 @@ from exercise import Exercise
 class PythonTrack(common.Track):
     """Solutions for the Python track on exercism."""
 
-    def get_name(self) -> str:
-        """Return the name of the track."""
+    @property
+    def name(self) -> str:
+        """Name of the track."""
         return 'python'
 
-    def get_commands(self) -> list[common.Command]:
-        """Return the list of commands specific to this track."""
-        return super().get_commands() + [TestCommand()]
+    @property
+    def commands(self) -> list[common.Command]:
+        """List of commands specific to this track."""
+        return [TestCommand()]
 
 
 class TestCommand(common.Command):
     """Run tests using pytest."""
 
-    def get_name(self) -> str:
+    @property
+    def name(self) -> str:
         """Return the name of the command."""
         return 'test'
-
-    def get_help(self) -> str:
-        """Return help text for the command."""
-        return 'run tests'
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""

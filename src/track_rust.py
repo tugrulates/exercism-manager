@@ -15,23 +15,24 @@ from exercise import Exercise
 class RustTrack(common.Track):
     """Solutions for the Rust track on exercism."""
 
-    def get_name(self) -> str:
-        """Return the name of the track."""
+    @property
+    def name(self) -> str:
+        """Name of the track."""
         return 'rust'
 
-    def get_commands(self) -> list[common.Command]:
-        """Return the list of commands specific to this track."""
-        return super().get_commands() + [
-            InitCommand(),
-            CargoCommand('build'),
-            CargoCommand('check'),
-            CargoCommand('test', '--', '--include-ignored'),
-            CargoCommand('clean', support_features=False),
-            CargoCommand('doc', '--open')]
+    @property
+    def commands(self) -> list[common.Command]:
+        """List of commands specific to this track."""
+        return [InitCommand(),
+                CargoCommand('build'),
+                CargoCommand('check'),
+                CargoCommand('test', '--', '--include-ignored'),
+                CargoCommand('clean', support_features=False),
+                CargoCommand('doc', '--open')]
 
     def get_additional_solution_files(self, exercise: Exercise) -> list[Path]:
         """Return code files for given solution."""
-        return [exercise.get_path('Cargo.toml')]
+        return [exercise.path / 'Cargo.toml']
 
     def post_download(self, exercise: Exercise) -> None:
         """Prepate rust workspace for this solution."""
@@ -41,18 +42,15 @@ class RustTrack(common.Track):
 class InitCommand(common.Command):
     """Add solution to rust packages and set as active debug target."""
 
-    __LINTS = ['#![warn(clippy::all)]\n', '#![warn(missing_docs)]\n']
+    _LINTS = ['#![warn(clippy::all)]\n', '#![warn(missing_docs)]\n']
 
-    def get_name(self) -> str:
-        """Return the name of the command."""
+    @property
+    def name(self) -> str:
+        """Name of the command."""
         return 'init'
 
-    def get_help(self) -> str:
-        """Return help text for the command."""
-        return 're-initialize exercise'
-
     def __init_package(self, exercise: Exercise) -> None:
-        config_file = exercise.get_path('Cargo.toml')
+        config_file = exercise.path / 'Cargo.toml'
         with config_file.open('r') as f:
             config = toml.load(f)
         if config['package']['name'] != exercise.name:
@@ -83,22 +81,22 @@ class InitCommand(common.Command):
         for config in launch.get('configurations'):
             if 'cargo' in config:
                 config['cargo'].get('args', []).append(
-                    exercise.fmt('--package={exercise}'))
+                    f'--package={exercise.name}')
         with config_file.open('w') as f:
             json.dump(launch, f, indent=4)
 
     def __init_lints(self, exercise: Exercise) -> None:
-        file = exercise.find_solution_file('src/*.rs')
+        file = exercise.find_file('src/*.rs')
         with file.open('r') as f:
             lines = f.readlines()
-        lints = [x for x in InitCommand.__LINTS if x not in lines]
+        lints = [x for x in InitCommand._LINTS if x not in lines]
         has_crate_doc = any(x for i, x in enumerate(lines)
                             if x.startswith('//! ') and
                             lines[i+1:i+2] == ['\n'])
         out_lines = []
         if not has_crate_doc:
-            out_lines.append(exercise.fmt(
-                '//! Solve {exercise} on Exercism.\n'))
+            out_lines.append(
+                f'//! Solve {exercise.name} on Exercism.\n')
             out_lines.append('\n')
         if lints:
             out_lines.extend(lints)
@@ -126,21 +124,18 @@ class CargoCommand(common.Command):
         :param args: extra arguments for cargo
         :param support_features: allow feature management
         """
-        self.__name = name
-        self.__args = args
-        self.__support_features = support_features
+        self._name = name
+        self._args = args
+        self._support_features = support_features
 
-    def get_name(self) -> str:
-        """Return the name of the command."""
-        return self.__name
-
-    def get_help(self) -> str:
-        """Return help text for the command."""
-        return f'run {self.__name}'
+    @property
+    def name(self) -> str:
+        """Name of the command."""
+        return self._name
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         """Add supported cargo arguments."""
-        if self.__support_features:
+        if self._support_features:
             parser.add_argument(
                 '--features',
                 help='space or comma separated list of features to enable')
@@ -153,10 +148,10 @@ class CargoCommand(common.Command):
         # Set the current exercise a default.
         InitCommand().run(exercise)
         args = ['--package', exercise.name]
-        if self.__support_features:
-            if exercise._namespace.features:
-                args.extend(['--features', exercise._namespace.features])
-            if exercise._namespace.all_features:
+        if self._support_features:
+            if exercise.namespace.features:
+                args.extend(['--features', exercise.namespace.features])
+            if exercise.namespace.all_features:
                 args.extend(['--all-features'])
-        args.extend(self.__args)
-        subprocess.check_call(['cargo', self.__name] + args)
+        args.extend(self._args)
+        subprocess.check_call(['cargo', self.name] + args)

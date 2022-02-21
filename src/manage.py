@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import inspect
 import sys
 from argparse import ArgumentError, ArgumentParser, Namespace
 from subprocess import CalledProcessError
+from typing import Any, Optional
 
-from common import Command, DownloadCommand, Track
+from common import Command, DownloadCommand, Track, get_default_commands
 from exercise import Exercise
 from track_c import CTrack
 from track_python import PythonTrack
@@ -20,12 +22,12 @@ def main() -> None:
     namespace: Namespace
     parser: ArgumentParser
     track = parse_track()
-    commands = track.get_commands()
+    commands = get_default_commands() + (track.commands if track else [])
     namespace, parser = parse_args(commands)
-    [command] = [x for x in track.get_commands()
-                 if x.get_name() == namespace.command]
+    [command] = [x for x in commands if x.name == namespace.command]
 
     try:
+        assert track
         exercise = Exercise(track, namespace)
         if command.needs_download() and not exercise.is_downloaded():
             DownloadCommand().run(exercise)
@@ -44,30 +46,39 @@ def parse_args(commands: list[Command]) -> tuple[Namespace, ArgumentParser]:
     """
     parser = ArgumentParser(description='Manage Exercism solutions.')
     parser.add_argument('--track', required=True,
-                        choices=[x.get_name() for x in TRACKS],
+                        choices=[x.name for x in TRACKS],
                         help='language track')
     parser.add_argument('--exercise', required=True, help='exercise slug')
     parser.add_argument('--user', help='operate for mentee solutions')
     subparsers = parser.add_subparsers(
         title='commands', dest='command', required=True)
     for command in commands:
-        subparser = subparsers.add_parser(
-            command.get_name(), help=command.get_help())
+        subparser = subparsers.add_parser(command.name, help=get_help(command))
         command.add_arguments(subparser)
     namespace = parser.parse_args(sys.argv[1:])
     return namespace, parser
 
 
-def parse_track() -> Track:
+def parse_track() -> Optional[Track]:
     """Parse just the track argument.
 
     :return: (parsed arguments, parser)
     """
     parser = ArgumentParser(add_help=False)
-    parser.add_argument('--track', choices=[x.get_name() for x in TRACKS])
+    parser.add_argument('--track', choices=[x.name for x in TRACKS])
     namespace, _ = parser.parse_known_args(sys.argv[1:])
-    [track] = [x for x in TRACKS if x.get_name() == namespace.track]
-    return track
+    if namespace.track:
+        [track] = [x for x in TRACKS if x.name == namespace.track]
+        return track
+    return None
+
+
+def get_help(obj: Any) -> Optional[str]:
+    """Generate command line help from docstring of object."""
+    docstring = inspect.getdoc(obj)
+    if not docstring:
+        return None
+    return ''.join(docstring.splitlines()[:1]).strip().rstrip('.').lower()
 
 
 if __name__ == '__main__':

@@ -10,37 +10,48 @@ from pathlib import Path
 from exercise import Exercise
 
 
+def get_default_commands() -> list[Command]:
+    """Return list of commands common to all tracks."""
+    return [VisitCommand(),
+            DownloadCommand(),
+            InfoCommand(),
+            OpenCommand(),
+            SubmitCommand()]
+
+
 class Track(metaclass=abc.ABCMeta):
     """All solutions for an Exercism track."""
 
+    @property
     @abc.abstractmethod
-    def get_name(self) -> str:
-        """Return the name of the track."""
+    def name(self) -> str:
+        """Name of the track."""
 
-    def get_commands(self) -> list[Command]:
-        """Return the list of all commands available for exercises."""
-        return [VisitCommand(), DownloadCommand(),
-                OpenCommand(), SubmitCommand()]
+    @property
+    @abc.abstractmethod
+    def commands(self) -> list[Command]:
+        """List of commands for this track."""
 
     def get_additional_solution_files(self, exercise: Exercise) -> list[Path]:
-        """Return the list of commands specific to this track."""
+        """Return extra code files for an exercise solution."""
         return []
 
     def post_download(self, exercise: Exercise) -> None:
         """Prepare solution after download for faster solve."""
         pass
 
+    def __str__(self) -> str:
+        """Name of track."""
+        return self.name
+
 
 class Command(metaclass=abc.ABCMeta):
     """Script command for a single operation."""
 
+    @property
     @abc.abstractmethod
-    def get_name(self) -> str:
-        """Return the name of the command."""
-
-    @abc.abstractmethod
-    def get_help(self) -> str:
-        """Return help text for the command."""
+    def name(self) -> str:
+        """Name of the command."""
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         """Add command specific arguments to the parser."""
@@ -54,19 +65,18 @@ class Command(metaclass=abc.ABCMeta):
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
 
+    def __str__(self) -> str:
+        """Name of command."""
+        return self.name
+
 
 class VisitCommand(Command):
     """Visit the url of solution on browser."""
 
-    __URL = 'https://exercism.org/tracks/{track}/exercises/{exercise}'
-
-    def get_name(self) -> str:
-        """Return the name of the command."""
+    @property
+    def name(self) -> str:
+        """Name of the command."""
         return 'visit'
-
-    def get_help(self) -> str:
-        """Return help text for the command."""
-        return 'open the exercise page on browser'
 
     def needs_download(self) -> bool:
         """Return whether the exercise is needed locally."""
@@ -74,25 +84,23 @@ class VisitCommand(Command):
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
-        if not exercise.is_downloaded():
+        if exercise.is_downloaded():
             if exercise.user:
                 raise ArgumentError(
                     None, 'download a user solution before visiting')
         else:
-            url = exercise.fmt(VisitCommand.__URL)
+            url = ('https://exercism.org/tracks/'
+                   f'{exercise.track}/exercises/{exercise.name}')
         subprocess.check_call(['python', '-m', 'webbrowser', url])
 
 
 class DownloadCommand(Command):
     """Download solution from exercism."""
 
-    def get_name(self) -> str:
-        """Return the name of the command."""
+    @property
+    def name(self) -> str:
+        """Name of the command."""
         return 'download'
-
-    def get_help(self) -> str:
-        """Return help text for the command."""
-        return 'download exercise and initialize'
 
     def needs_download(self) -> bool:
         """Return whether the exercise is needed locally."""
@@ -106,16 +114,38 @@ class DownloadCommand(Command):
         exercise.download()
 
 
+class InfoCommand(Command):
+    """Print information about the exercise."""
+
+    @property
+    def name(self) -> str:
+        """Name of the command."""
+        return 'info'
+
+    def run(self, exercise: Exercise) -> None:
+        """Run the command."""
+        solution_files = [str(x.relative_to(exercise.path))
+                          for x in exercise.solution_files]
+        test_files = [str(x.relative_to(exercise.path))
+                      for x in exercise.test_files]
+        lines = [f'track:          {exercise.track}',
+                 f'exercise:       {exercise.name}',
+                 f'blurb:          {exercise.blurb}',
+                 f'user:           {exercise.user}' if exercise.user else None,
+                 f'path:           {exercise.path}',
+                 f'url:            {exercise.url}',
+                 f'solution files: {solution_files}',
+                 f'test files:     {test_files}']
+        print('\n'.join(filter(None, lines)))
+
+
 class OpenCommand(Command):
     """Open all code and test files on IDE."""
 
-    def get_name(self) -> str:
-        """Return the name of the command."""
+    @property
+    def name(self) -> str:
+        """Name of the command."""
         return 'open'
-
-    def get_help(self) -> str:
-        """Return help text for the command."""
-        return 'open exercise files in VSCode'
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
@@ -126,13 +156,10 @@ class OpenCommand(Command):
 class SubmitCommand(Command):
     """Submit solution files to exercism."""
 
-    def get_name(self) -> str:
-        """Return the name of the command."""
+    @property
+    def name(self) -> str:
+        """Name of the command."""
         return 'submit'
-
-    def get_help(self) -> str:
-        """Return help text for the command."""
-        return 'submit solution to exercism'
 
     def run(self, exercise: Exercise) -> None:
         """Run the command."""
