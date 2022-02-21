@@ -12,10 +12,10 @@ from exercise import Exercise
 
 def get_default_commands() -> list[Command]:
     """Return list of commands common to all tracks."""
-    return [VisitCommand(),
+    return [OpenCommand(),
             DownloadCommand(),
             InfoCommand(),
-            OpenCommand(),
+            CodeCommand(),
             SubmitCommand()]
 
 
@@ -70,7 +70,7 @@ class Command(metaclass=abc.ABCMeta):
         return self.name
 
 
-class VisitCommand(Command):
+class OpenCommand(Command):
     """Visit the url of solution on browser."""
 
     @property
@@ -135,7 +135,7 @@ class InfoCommand(Command):
         print('\n'.join(filter(None, lines)))
 
 
-class OpenCommand(Command):
+class CodeCommand(Command):
     """Open all code and test files on IDE."""
 
     @property

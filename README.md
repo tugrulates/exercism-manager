@@ -9,6 +9,7 @@ This purpose of this project is to aid me in learning development practices. PRs
 - Creates buildable stubs by code generation (C track only)
 - Track agnostic CLI for building and testing
 - Manage solutions from other users (handy for mentoring)
+- Enforce pedantic checks to improve on style and best practices.
 - Some VSCode integration
 
 ## Limitations:
@@ -24,5 +25,5 @@ This purpose of this project is to aid me in learning development practices. PRs
 - `./manage --help`
 - Download a solution: `./manage --track=c --exercise=bob download`
 - It's ready to build and test: `./manage --track=c --exercise=bob test`
-- Open problem files on VSCode: `./manage --track=c --exercise=bob open`
+- Open problem files on VSCode: `./manage --track=c --exercise=bob code`
 - Submit: `./manage --track=c --exercise=bob submit`
